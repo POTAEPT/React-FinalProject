@@ -21,7 +21,7 @@
 
 | ส่วนของแอป | Server / Client | เหตุผล |
 | ---------- | --------------- | ------ |
-| / หน้าแรก | Server | ดึงตี้มาใหม่/ใกล้เต็มจาก DB ตรงๆ ได้ SEO ไม่ต้องส่ง JS |
+| /หน้าแรก | Server | ดึงตี้มาใหม่/ใกล้เต็มจาก DB ตรงๆ ได้ SEO ไม่ต้องส่ง JS |
 | /categories กริดหมวดหมู่ | Server | หมวดหมู่เป็นข้อมูล static ดึงครั้งเดียว + อยากให้โหลดไว |
 | /discover กองการ์ด + ปัดซ้าย/ขวา | Client | ต้องใช้ gesture/drag (framer-motion), `useState` เก็บ deck, `useSearchParams` อ่าน category, ต้อง animate แบบ 60fps ทำฝั่ง server ไม่ได้ |
 | /party/[id] รายละเอียด | Server | ดึงจาก DB + ISR revalidate 30 วินาที เพื่ออัปเดตจำนวนคน |
@@ -37,3 +37,16 @@
 - mutation: `createTee` เป็น Server Action จากฟอร์ม /create แล้ว revalidate `/` และ `/discover` · `toggleJoin(teeId)` เรียกเมื่อปัดขวา (หรือกดเข้าร่วมใน /party/[id]) และ `skipTee(teeId)` เรียกเมื่อปัดซ้าย — ทั้งคู่บันทึกฝั่ง server แล้ว revalidate `/discover` และ `/my-party`
 
 ## 5. แบ่งงานกันยังไง
+
+
+
+ต้องส่ง
+Supabase schema
+
+ต้องมี
+- Register
+- มีรูปผู้ใช้
+- มีlogin
+- หน้าapprove
+- Manage party 🎉
+- เก็บstage จำนวนคน,การยืนยันหรือยกเลิก
