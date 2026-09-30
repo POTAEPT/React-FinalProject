@@ -39,7 +39,7 @@ export default async function CreatePage() {
       <div className="grid gap-2">
         <h1 className="text-3xl font-semibold tracking-tight">ตั้งตี้</h1>
         <p className="text-sm leading-6 text-muted">
-          ใส่รายละเอียดกิจกรรม คนที่เปิดแอปจะเห็นการ์ดนี้ในหน้าหาตี้และในหมวดที่เลือก
+          ใส่รายละเอียดกิจกรรม คนที่เปิดแอปจะเห็นการ์ดนี้ในหน้าหาตี้ และเลือกหมวดจากตัวกรองได้
         </p>
       </div>
       {user ? (

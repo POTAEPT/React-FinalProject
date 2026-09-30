@@ -73,8 +73,6 @@ export async function createParty(input) {
   }
 
   revalidatePath("/");
-  revalidatePath("/categories");
-  revalidatePath(`/categories/${party.category}`);
 
   return { ok: true, id: data.id };
 }

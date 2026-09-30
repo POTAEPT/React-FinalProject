@@ -129,7 +129,7 @@ export default async function PartyPage({ params }) {
           <p className="text-sm text-muted">ยังไม่มีรายละเอียดเพิ่ม</p>
         )}
         <Link
-          href={`/categories/${party.category}`}
+          href={`/?category=${party.category}`}
           className="text-sm font-medium text-accent"
         >
           ตี้อื่นในหมวด {categoryLabel(party.category)}

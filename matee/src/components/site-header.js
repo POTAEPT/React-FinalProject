@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "หาตี้" },
-  { href: "/categories", label: "หมวดหมู่" },
   { href: "/create", label: "ตั้งตี้" },
 ];
 
