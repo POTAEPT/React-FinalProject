@@ -1,6 +1,4 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import type { ReactNode } from "react";
 
 import "./globals.css";
 
@@ -14,16 +12,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "MaTee | มาตี้กัน",
   description: "หาตี้ทำกิจกรรมสำหรับนักศึกษา มช.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }) {
   return (
     <html
       lang="th"

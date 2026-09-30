@@ -1,12 +1,7 @@
 const supabaseUrlKey = "NEXT_PUBLIC_SUPABASE_URL";
 const supabaseAnonKeyKey = "NEXT_PUBLIC_SUPABASE_ANON_KEY";
 
-export type SupabaseEnv = {
-  url: string;
-  anonKey: string;
-};
-
-export function getSupabaseEnv(): SupabaseEnv | null {
+export function getSupabaseEnv() {
   const url = process.env[supabaseUrlKey];
   const anonKey = process.env[supabaseAnonKeyKey];
 
@@ -17,7 +12,7 @@ export function getSupabaseEnv(): SupabaseEnv | null {
   return { url, anonKey };
 }
 
-export function requireSupabaseEnv(): SupabaseEnv {
+export function requireSupabaseEnv() {
   const env = getSupabaseEnv();
 
   if (!env) {
