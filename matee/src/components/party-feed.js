@@ -1,0 +1,40 @@
+import { PartyCard } from "@/components/party-card";
+import { listParties } from "@/lib/parties/queries";
+
+export async function PartyFeed({ filters, emptyMessage }) {
+  const result = await listParties(filters);
+
+  if (!result.ok && result.reason === "unconfigured") {
+    return (
+      <p className="rounded-2xl border border-dashed border-line bg-card px-4 py-8 text-center text-sm leading-6 text-muted">
+        ใส่ NEXT_PUBLIC_SUPABASE_URL และ NEXT_PUBLIC_SUPABASE_ANON_KEY ใน matee/.env.local
+      </p>
+    );
+  }
+
+  if (!result.ok) {
+    return (
+      <p role="alert" className="rounded-2xl border border-line bg-card px-4 py-8 text-center text-sm">
+        โหลดรายการตี้ไม่สำเร็จ
+      </p>
+    );
+  }
+
+  if (result.parties.length === 0) {
+    return (
+      <p className="rounded-2xl border border-dashed border-line bg-card px-4 py-8 text-center text-sm leading-6 text-muted">
+        {emptyMessage}
+      </p>
+    );
+  }
+
+  return (
+    <ul className="grid gap-4 sm:grid-cols-2">
+      {result.parties.map((party) => (
+        <li key={party.id}>
+          <PartyCard party={party} />
+        </li>
+      ))}
+    </ul>
+  );
+}
