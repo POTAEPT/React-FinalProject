@@ -6,7 +6,7 @@ export default function FormField({ label, name, ...props }) {
       <input
         id={name}
         name={name}
-        className="px-3 py-2 text-sm transition border rounded-lg outline-none border-zinc-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
+        className="px-3 py-2 text-sm text-black transition border rounded-lg outline-none border-zinc-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
         {...props}
       />
     </div>
