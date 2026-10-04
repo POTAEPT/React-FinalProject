@@ -18,6 +18,7 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  console.log('✅ [Server] Rendering RootLayout')
   return (
     <html
       lang="th"
