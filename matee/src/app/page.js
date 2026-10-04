@@ -1,24 +1,31 @@
-import { getSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
 
-export default async function Home() {
-  const configured = getSupabaseEnv() !== null;
+import { PartyFeed } from "@/components/party-feed";
+import { PartyFilters } from "@/components/party-filters";
+import { readFeedFilters } from "@/lib/parties/filters";
 
-  if (configured) {
-    await createClient();
-  }
+export const metadata = {
+  title: "หาตี้ | MaTee",
+};
+
+export default async function Home({ searchParams }) {
+  const filters = await readFeedFilters(searchParams);
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="text-4xl font-semibold tracking-tight">MaTee</h1>
-      <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-        มาตี้กัน — หาตี้ทำกิจกรรมด้วยกัน
-      </p>
-      <p className="text-sm text-zinc-500">
-        {configured
-          ? "Supabase client ready"
-          : "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY"}
-      </p>
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
+      <div className="grid gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight">หาตี้</h1>
+        <p className="max-w-xl text-sm leading-6 text-muted">
+          ตี้ที่ยังเปิดรับและยังไม่เริ่ม เลือกหมวดหรือค้นจากชื่อกับสถานที่
+        </p>
+      </div>
+      <Suspense fallback={<div className="h-16 rounded-xl bg-line/60" />}>
+        <PartyFilters />
+      </Suspense>
+      <PartyFeed
+        filters={filters}
+        emptyMessage="ยังไม่มีตี้ที่ตรงกับตัวกรอง ลองล้างคำค้นหรือตั้งตี้ใหม่"
+      />
     </main>
   );
 }
