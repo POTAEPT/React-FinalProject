@@ -1,4 +1,5 @@
 import { PartyCard } from "@/components/party-card";
+import { findConflict } from "@/lib/parties/my-commitments";
 import { listParties } from "@/lib/parties/queries";
 
 export async function PartyFeed({ filters, emptyMessage }) {
@@ -32,7 +33,11 @@ export async function PartyFeed({ filters, emptyMessage }) {
     <ul className="grid gap-4 sm:grid-cols-2">
       {result.parties.map((party) => (
         <li key={party.id}>
-          <PartyCard party={party} />
+          <PartyCard
+            party={party}
+            conflict={findConflict(result.commitments, party.startMs, party.endMs, party.id)}
+            canSkip={Boolean(result.viewerId) && result.viewerId !== party.ownerId}
+          />
         </li>
       ))}
     </ul>
