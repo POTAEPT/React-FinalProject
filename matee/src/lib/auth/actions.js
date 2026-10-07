@@ -28,9 +28,25 @@ export async function signUp({ displayName, email, password }) {
     },
   });
 
-  if (error) {
-    return { error: error.message };
+  return { error: error?.message || null }
+}
+
+// 2. เข้าสู่ระบบ
+export async function signIn({ email, password }) {
+  const normalizedEmail = email?.trim()
+
+  if (!normalizedEmail || !password) {
+    return { error: 'กรุณากรอก Email และ Password' }
   }
+
+  const supabase = createClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  })
+
+  return { error: error ? 'Email หรือ Password ไม่ถูกต้อง' : null }
+}
 
   return {
     error: null,
