@@ -52,4 +52,4 @@ export async function signIn({ email, password }) {
     error: null,
     needsEmailConfirmation: !data.session,
   };
-}
+
