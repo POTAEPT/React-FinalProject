@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/", label: "หาตี้" },
   { href: "/create", label: "ตั้งตี้" },
+  { href: "/my-party", label: "ตี้ของฉัน" },
 ];
 
 export function SiteHeader() {
