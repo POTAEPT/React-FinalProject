@@ -16,6 +16,7 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  console.log('✅ [Server] Rendering RootLayout')
   return (
     <html lang="th" className={`${notoSansThai.variable} h-full antialiased`}>
       <body className={`${notoSansThai.className} flex min-h-full flex-col`}>
