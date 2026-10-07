@@ -119,7 +119,31 @@ export async function listParties({
     return { ok: false, reason: "query", parties: [] };
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let skipped = new Set();
+  let commitments = [];
+
+  if (user) {
+    const [skipsResult, myCommitments] = await Promise.all([
+      supabase.from("skips").select("party_id").eq("user_id", user.id),
+      getMyCommitments(supabase, user.id),
+    ]);
+
+    if (skipsResult.error) {
+      console.error("load skips", skipsResult.error.message);
+    }
+
+    skipped = new Set((skipsResult.data ?? []).map((skip) => skip.party_id));
+    commitments = myCommitments;
+  }
+
   const parties = (await loadRelated(supabase, data ?? [])).filter((party) => {
+    if (skipped.has(party.id)) {
+      return false;
+    }
+
     if (party.hostBanned) {
       return false;
     }
@@ -135,7 +159,7 @@ export async function listParties({
     return true;
   });
 
-  return { ok: true, parties };
+  return { ok: true, parties, viewerId: user?.id ?? null, commitments };
 }
 
 export async function getParty(id) {

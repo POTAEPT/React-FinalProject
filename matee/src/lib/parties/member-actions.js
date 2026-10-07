@@ -10,7 +10,7 @@ import {
 import { partyEndMs, partyStartMs } from "@/lib/parties/time";
 import { createClient } from "@/lib/supabase/server";
 
-const partyIdPattern =
+const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function fail(code, message) {
@@ -25,7 +25,7 @@ function revalidateParty(partyId) {
 
 // The signed-in user and the party they are acting on, or a failure result.
 async function loadContext(partyId) {
-  if (typeof partyId !== "string" || !partyIdPattern.test(partyId)) {
+  if (typeof partyId !== "string" || !uuidPattern.test(partyId)) {
     return { error: fail("not_found", "ไม่พบตี้นี้") };
   }
 
@@ -196,4 +196,146 @@ export async function leaveParty(partyId) {
   revalidateParty(party.id);
 
   return { ok: true, status: "cancelled" };
+}
+
+// Host only: confirm or reject a request. Confirming still goes through the
+// capacity trigger, so a full party refuses it.
+export async function decideRequest(memberId, decision) {
+  if (decision !== "confirmed" && decision !== "rejected") {
+    return fail("invalid", "คำสั่งไม่ถูกต้อง");
+  }
+
+  if (typeof memberId !== "string" || !uuidPattern.test(memberId)) {
+    return fail("not_found", "ไม่พบคำขอนี้");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return fail("unauthenticated", "เข้าสู่ระบบก่อน");
+  }
+
+  const { data: member, error: memberError } = await supabase
+    .from("party_members")
+    .select("id, party_id, user_id, status")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (memberError) {
+    console.error("load member row", memberError.message);
+    return fail("unknown", "ทำรายการไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  if (!member) {
+    return fail("not_found", "ไม่พบคำขอนี้");
+  }
+
+  const context = await loadContext(member.party_id);
+
+  if (context.error) {
+    return context.error;
+  }
+
+  const { party } = context;
+
+  if (party.owner_id !== user.id) {
+    return fail("not_host", "เฉพาะเจ้าของตี้เท่านั้น");
+  }
+
+  if (member.user_id === party.owner_id) {
+    return fail("host", "เจ้าของตี้เป็นสมาชิกเสมอ");
+  }
+
+  if (party.status === "cancelled") {
+    return fail("cancelled", "ตี้นี้ถูกยกเลิกแล้ว");
+  }
+
+  if (member.status === "cancelled") {
+    return fail("left", "คนนี้ออกจากตี้ไปแล้ว");
+  }
+
+  const { error } = await supabase
+    .from("party_members")
+    .update({ status: decision })
+    .eq("id", member.id);
+
+  if (error) {
+    const text = `${error.message ?? ""} ${error.details ?? ""}`;
+
+    if (text.includes("Party is full")) {
+      return fail("full", "ตี้เต็มแล้ว ยืนยันเพิ่มไม่ได้");
+    }
+
+    if (text.includes("Time conflict")) {
+      return fail("time_conflict", "คนนี้มีตี้อื่นที่เวลาชนกันแล้ว");
+    }
+
+    console.error("decide request", error.message);
+    return fail("unknown", "ทำรายการไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  revalidateParty(party.id);
+  revalidatePath(`/manage/${party.id}`);
+
+  return { ok: true, status: decision };
+}
+
+// Host only: cancel the whole party. One-way; the schema refuses reopening.
+export async function cancelParty(partyId) {
+  const context = await loadContext(partyId);
+
+  if (context.error) {
+    return context.error;
+  }
+
+  const { supabase, user, party } = context;
+
+  if (party.owner_id !== user.id) {
+    return fail("not_host", "เฉพาะเจ้าของตี้เท่านั้น");
+  }
+
+  if (party.status === "cancelled") {
+    return { ok: true };
+  }
+
+  const { error } = await supabase
+    .from("parties")
+    .update({ status: "cancelled" })
+    .eq("id", party.id);
+
+  if (error) {
+    console.error("cancel party", error.message);
+    return fail("unknown", "ยกเลิกตี้ไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  revalidateParty(party.id);
+  revalidatePath(`/manage/${party.id}`);
+
+  return { ok: true };
+}
+
+// Hide a party from this user's feed. Skipping twice is not an error.
+export async function skipParty(partyId) {
+  const context = await loadContext(partyId);
+
+  if (context.error) {
+    return context.error;
+  }
+
+  const { supabase, user, party } = context;
+  const { error } = await supabase
+    .from("skips")
+    .insert({ party_id: party.id, user_id: user.id });
+
+  if (error && error.code !== "23505") {
+    console.error("skip party", error.message);
+    return fail("unknown", "ข้ามตี้ไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  revalidatePath("/");
+
+  return { ok: true };
 }
