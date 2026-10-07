@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
@@ -27,6 +28,7 @@ function FieldError({ message, id }) {
 export function CreatePartyForm({ defaultDate, minDate }) {
   const router = useRouter();
   const [formError, setFormError] = useState(null);
+  const [conflict, setConflict] = useState(null);
   const [category, setCategory] = useState("sport");
   const [isPending, startTransition] = useTransition();
   const {
@@ -52,8 +54,16 @@ export function CreatePartyForm({ defaultDate, minDate }) {
   });
   function onSubmit(values) {
     setFormError(null);
+    setConflict(null);
     startTransition(async () => {
       const result = await createParty(values);
+
+      if (!result.ok && result.code === "time_conflict") {
+        setError("eventDate", { type: "time_conflict", message: "" });
+        setError("eventTime", { type: "time_conflict", message: result.message });
+        setConflict(result);
+        return;
+      }
 
       if (!result.ok) {
         if (result.fieldErrors) {
@@ -165,6 +175,14 @@ export function CreatePartyForm({ defaultDate, minDate }) {
             เวลาประเทศไทย
           </p>
           <FieldError id="event-time-error" message={errors.eventTime?.message} />
+          {conflict?.conflictingPartyId && errors.eventTime ? (
+            <Link
+              href={`/party/${conflict.conflictingPartyId}`}
+              className="text-sm font-medium text-accent underline"
+            >
+              ดูตี้ “{conflict.conflictingTitle}”
+            </Link>
+          ) : null}
         </div>
         <div className="grid gap-1">
           <label htmlFor="durationMinutes" className="text-sm font-medium">
