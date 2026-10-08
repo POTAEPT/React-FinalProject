@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+function redirectWithSession(url, supabaseResponse) {
+  const response = NextResponse.redirect(url)
+
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie)
+  })
+
+  return response
+}
+
 /**
  * อธิบาย: ไฟล์ Middleware ทำหน้าที่เปรียบเสมือนยามเฝ้าประตู (Guard)
  * 
@@ -27,19 +37,23 @@ export async function middleware(request) {
   if (isProtected && !user) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
+    return redirectWithSession(loginUrl, supabaseResponse)
   }
 
   // 3. ตรวจสอบว่าโดนแบนหรือไม่
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('banned_at')
       .eq('id', user.id)
       .single()
 
+    if (profileError) {
+      console.error('Middleware profile lookup failed:', profileError)
+    }
+
     if (profile?.banned_at) {
-      return NextResponse.redirect(new URL('/banned', request.url))
+      return redirectWithSession(new URL('/banned', request.url), supabaseResponse)
     }
   }
 

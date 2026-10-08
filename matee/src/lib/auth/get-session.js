@@ -1,5 +1,6 @@
-import { jwtVerify } from 'jose'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { createClient } from '@/lib/supabase/server'
+import { requireSupabaseEnv } from '@/lib/supabase/env'
 
 /**
  * อธิบาย: ฟังก์ชันสำหรับดึง Session และ Profile ของผู้ใช้งาน โดยใช้ Local JWT Verification
@@ -12,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
  */
 export async function getSession() {
   const supabase = await createClient()
+  const { url } = requireSupabaseEnv()
 
   // 1. อ่านค่า Token จาก Cookie
   const { data: { session } } = await supabase.auth.getSession()
@@ -20,26 +22,37 @@ export async function getSession() {
 
   let payload
   try {
-    // 2. แปลง Secret Key
-    const secret = new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET)
-    
-    // 3. ยืนยันความถูกต้องของ Token (Local Verify)
+    const jwks = createRemoteJWKSet(
+      new URL(`${url}/auth/v1/.well-known/jwks.json`),
+    )
+
+    // ยืนยัน JWT กับ Project JWKS
     // หาก Token ปลอมหรือหมดอายุ โค้ดจะโยน Error ไปที่ block catch ทันที
-    const { payload: verified } = await jwtVerify(session.access_token, secret)
+    const { payload: verified } = await jwtVerify(session.access_token, jwks, {
+      issuer: `${url}/auth/v1`,
+      audience: 'authenticated',
+    })
     payload = verified
-  } catch (err) {
-    console.error('JWT verify failed:', err.code)
+  } catch (error) {
+    console.error('JWT verify failed:', error)
     return null
   }
 
-  // 4. ดึงข้อมูล Profile เพิ่มเติมจาก Database
+  if (typeof payload.sub !== 'string' || !payload.sub) return null
+
+  // ดึงข้อมูล Profile เพิ่มเติมจาก Database
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, username, role, avatar_url, banned_at')
+    .select('id, display_name, role, avatar_url, banned_at')
     .eq('id', payload.sub)
     .single()
 
-  if (profileError || !profile) return null
+  if (profileError) {
+    console.error('Profile lookup failed:', profileError)
+    return null
+  }
+
+  if (!profile) return null
 
   // 5. ส่งค่ากลับไปใช้งาน
   return {
@@ -47,7 +60,7 @@ export async function getSession() {
       id: payload.sub,
       email: payload.email,
       exp: payload.exp,
-      role: payload.role,
+      role: profile.role,
     },
     profile,
   }

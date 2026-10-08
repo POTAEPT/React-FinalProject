@@ -37,3 +37,26 @@ export async function signUp({ displayName, email, password }) {
     needsEmailConfirmation: !data.session,
   };
 }
+
+export async function signIn({ email, password }) {
+  const normalizedEmail = email?.trim();
+
+  if (!normalizedEmail || !password) {
+    return { error: "กรุณากรอก Email และ Password" };
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  });
+
+  return { error: error ? "Email หรือ Password ไม่ถูกต้อง" : null };
+}
+
+export async function signOut() {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+
+  return { error: error?.message || null };
+}
