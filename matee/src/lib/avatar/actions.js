@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase/client'
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * อธิบาย: ฟังก์ชันสำหรับอัปโหลดรูปประจำตัว (Avatar)
@@ -15,8 +17,14 @@ export async function uploadAvatar({ userId, file }) {
   }
   if (file.size > 2 * 1024 * 1024) return { error: 'ขนาดไฟล์ต้องไม่เกิน 2MB' }
 
-  const supabase = createClient()
-  const ext = file.name.split('.').pop()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || user.id !== userId) {
+    return { error: 'ไม่มีสิทธิ์แก้ไขรูปโปรไฟล์นี้' }
+  }
+
+  const ext = file.type.split('/')[1]
   const filePath = `${userId}/${Date.now()}.${ext}` // ตั้งชื่อไฟล์ให้ไม่ซ้ำ
 
   // อัปโหลดไป Storage
