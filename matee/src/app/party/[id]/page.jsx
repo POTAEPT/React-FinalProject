@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PartyChatSection } from "@/components/chat/PartyChatSection";
 import { JoinButton } from "@/components/party/JoinButton";
 import {
   categoryLabel,
@@ -144,6 +145,7 @@ export default async function PartyPage({ params }) {
           ตี้อื่นในหมวด {categoryLabel(party.category)}
         </Link>
       </article>
+      <PartyChatSection party={party} viewer={viewer} />
     </main>
   );
 }
