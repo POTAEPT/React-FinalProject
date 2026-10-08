@@ -1,4 +1,4 @@
--- MaTee (มาตี้กัน) — Supabase schema
+﻿-- MaTee (เธกเธฒเธ•เธตเนเธเธฑเธ) โ€” Supabase schema
 -- Run this in the Supabase SQL editor on a fresh project.
 -- Login and register use Supabase Auth (auth.users). This file does not create a users table.
 -- The last section schedules the nightly chat purge with pg_cron; see the note there.
@@ -8,11 +8,11 @@
 -- ---------------------------------------------------------------------------
 
 create type public.party_category as enum (
-  'sport',       -- กีฬา
-  'board_game',  -- บอร์ดเกม
-  'study',       -- ติวสอบ
-  'cafe',        -- คาเฟ่
-  'other'        -- อื่นๆ (custom_category holds the label)
+  'sport',       -- เธเธตเธฌเธฒ
+  'board_game',  -- เธเธญเธฃเนเธ”เน€เธเธก
+  'study',       -- เธ•เธดเธงเธชเธญเธ
+  'cafe',        -- เธเธฒเน€เธเน
+  'other'        -- เธญเธทเนเธเน (custom_category holds the label)
 );
 
 -- Party lifecycle. Only what the host can set.
@@ -37,10 +37,10 @@ create type public.user_role as enum (
 
 -- Stage of one person in a party. This is what the approve page reads and writes.
 create type public.member_status as enum (
-  'pending',    -- ขอเข้า รอเจ้าของตี้ยืนยัน
-  'confirmed',  -- ยืนยันแล้ว นับรวมในจำนวนคน
-  'rejected',   -- เจ้าของตี้ปฏิเสธ
-  'cancelled'   -- ผู้ใช้ยกเลิกเอง หรือออกจากตี้
+  'pending',    -- เธเธญเน€เธเนเธฒ เธฃเธญเน€เธเนเธฒเธเธญเธเธ•เธตเนเธขเธทเธเธขเธฑเธ
+  'confirmed',  -- เธขเธทเธเธขเธฑเธเนเธฅเนเธง เธเธฑเธเธฃเธงเธกเนเธเธเธณเธเธงเธเธเธ
+  'rejected',   -- เน€เธเนเธฒเธเธญเธเธ•เธตเนเธเธเธดเน€เธชเธ
+  'cancelled'   -- เธเธนเนเนเธเนเธขเธเน€เธฅเธดเธเน€เธญเธ เธซเธฃเธทเธญเธญเธญเธเธเธฒเธเธ•เธตเน
 );
 
 -- ---------------------------------------------------------------------------
@@ -853,9 +853,17 @@ alter publication supabase_realtime add table public.parties, public.party_messa
 -- Upload path: avatars/<user id>/<filename>
 -- ---------------------------------------------------------------------------
 
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'avatars',
+  'avatars',
+  true,
+  2097152, -- 2 MB limit
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) update
+set file_size_limit = 2097152,
+    allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
 
 create policy "avatar images are public"
   on storage.objects for select

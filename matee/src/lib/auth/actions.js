@@ -1,38 +1,58 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from "@/lib/supabase/client";
 
-/**
- * อธิบาย: รวบรวมฟังก์ชันเกี่ยวกับการยืนยันตัวตน (Auth) ไว้ที่เดียว
- */
+export async function signUp({ displayName, email, password }) {
+  const trimmedDisplayName = displayName?.trim();
 
-// 1. สมัครสมาชิก
-export async function signUp({ username, email, password }) {
-  if (!username || username.length < 3) return { error: 'Username ต้องมีอย่างน้อย 3 ตัวอักษร' }
-  if (!password || password.length < 8) return { error: 'Password ต้องมีอย่างน้อย 8 ตัวอักษร' }
+  if (!trimmedDisplayName) {
+    return { error: "กรุณากรอกชื่อที่แสดง" };
+  }
 
-  const supabase = createClient()
+  if (trimmedDisplayName.length > 40) {
+    return { error: "ชื่อที่แสดงต้องมีความยาวไม่เกิน 40 ตัวอักษร" };
+  }
 
-  const { error } = await supabase.auth.signUp({
-    email,
+  if (!email?.trim()) {
+    return { error: "กรุณากรอก Email" };
+  }
+
+  if (!password || password.length < 8) {
+    return { error: "Password ต้องมีอย่างน้อย 8 ตัวอักษร" };
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
     password,
     options: {
-      // ตรงนี้คือการส่ง Metadata ซึ่งเดี๋ยวจะมี Trigger บน Database มารับไปใส่ตาราง profiles ให้อัตโนมัติ
-      data: { username: username.trim() },
+      data: { display_name: trimmedDisplayName },
     },
-  })
+  });
 
-  return { error: error?.message || null }
+  return {
+    error: error?.message || null,
+    needsEmailConfirmation: !data.session,
+  };
 }
 
-// 2. เข้าสู่ระบบ
 export async function signIn({ email, password }) {
-  const supabase = createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  return { error: error ? 'Email หรือ Password ไม่ถูกต้อง' : null }
+  const normalizedEmail = email?.trim();
+
+  if (!normalizedEmail || !password) {
+    return { error: "กรุณากรอก Email และ Password" };
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password,
+  });
+
+  return { error: error ? "Email หรือ Password ไม่ถูกต้อง" : null };
 }
 
-// 3. ออกจากระบบ
 export async function signOut() {
-  const supabase = createClient()
-  const { error } = await supabase.auth.signOut()
-  return { error: error?.message || null }
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+
+  return { error: error?.message || null };
 }

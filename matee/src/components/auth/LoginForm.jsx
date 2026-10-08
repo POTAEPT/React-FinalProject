@@ -1,0 +1,106 @@
+﻿'use client'
+import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { signIn } from '@/lib/auth/actions'
+import FormField from '@/components/ui/FormField'
+import Button from '@/components/ui/Button'
+import AlertMessage from '@/components/ui/AlertMessage'
+
+/**
+ * เธญเธเธดเธเธฒเธข: Component เธชเธณเธซเธฃเธฑเธเธเธญเธฃเนเธกเน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ
+ * เธซเธเนเธฒเธ—เธตเนเธเธทเธญเธเธฑเธ”เธเธฒเธฃ State (เธเธณเธฅเธฑเธเนเธซเธฅเธ”, เธเนเธญเธเธดเธ”เธเธฅเธฒเธ”) เนเธฅเธฐเธชเนเธเธเนเธญเธกเธนเธฅเนเธเธซเธฒเธเธฑเธเธเนเธเธฑเธ signIn
+ */
+export default function LoginForm() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = searchParams.get('next') || '/'
+
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({ email: '', password: '' })
+
+  function handleChange(event) {
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }))
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+
+    const result = await signIn(form)
+
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+
+    router.push(nextPath)
+    router.refresh()
+  }
+
+  return (
+    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+      <section className="w-full max-w-md rounded-2xl border border-line bg-card p-8 shadow-sm">
+        <h1 className="text-2xl font-semibold">เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ</h1>
+        <p className="mt-2 text-sm text-muted">
+          เน€เธเนเธฒเธชเธนเนเธเธฑเธเธเธตเน€เธเธทเนเธญเน€เธฃเธดเนเธกเนเธเนเธเธฒเธ MaTee
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          <label className="flex flex-col gap-2 text-sm">
+            Email
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
+              required
+              className="rounded-lg border border-line bg-background px-3 py-2"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 text-sm">
+            Password
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              autoComplete="current-password"
+              required
+              className="rounded-lg border border-line bg-background px-3 py-2"
+            />
+          </label>
+
+          {error ? (
+            <p role="alert" className="text-sm text-red-700">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-accent px-4 py-2 font-medium text-accent-foreground disabled:opacity-60"
+          >
+            {loading ? 'เธเธณเธฅเธฑเธเน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ...' : 'เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ'}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-muted">
+          เธขเธฑเธเนเธกเนเธกเธตเธเธฑเธเธเธต?{' '}
+          <Link href="/register" className="font-medium text-accent underline">
+            เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธ
+          </Link>
+        </p>
+      </section>
+    </main>
+  )
+}
