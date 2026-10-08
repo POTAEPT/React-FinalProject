@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/client";
 export async function signUp({ displayName, email, password }) {
   const trimmedDisplayName = displayName?.trim();
 
-  if (!trimmedDisplayName || trimmedDisplayName.length < 1) {
-    return { error: "ชื่อนี้มีการถูกใช้แล้วกรุณาเลือกชื่ออื่น" };
+  if (!trimmedDisplayName) {
+    return { error: "กรุณากรอกชื่อที่แสดง" };
   }
 
   if (trimmedDisplayName.length > 40) {
@@ -28,28 +28,31 @@ export async function signUp({ displayName, email, password }) {
     },
   });
 
-  return { error: error?.message || null }
+  return {
+    error: error?.message || null,
+    needsEmailConfirmation: !data.session,
+  };
 }
 
-// 2. เข้าสู่ระบบ
 export async function signIn({ email, password }) {
-  const normalizedEmail = email?.trim()
+  const normalizedEmail = email?.trim();
 
   if (!normalizedEmail || !password) {
-    return { error: 'กรุณากรอก Email และ Password' }
+    return { error: "กรุณากรอก Email และ Password" };
   }
 
-  const supabase = createClient()
+  const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
     password,
-  })
+  });
 
-  return { error: error ? 'Email หรือ Password ไม่ถูกต้อง' : null }
+  return { error: error ? "Email หรือ Password ไม่ถูกต้อง" : null };
 }
 
-  return {
-    error: null,
-    needsEmailConfirmation: !data.session,
-  };
+export async function signOut() {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+
+  return { error: error?.message || null };
 }
