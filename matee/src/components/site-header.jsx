@@ -8,8 +8,13 @@ const links = [
   { href: "/create", label: "ตั้งตี้" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ isAdmin = false, isAuthenticated = false }) {
   const pathname = usePathname();
+  const navigationLinks = [
+    ...links,
+    ...(isAuthenticated ? [{ href: "/account", label: "บัญชี" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "ผู้ดูแลระบบ" }] : []),
+  ];
 
   return (
     <header className="border-b border-line bg-card/90">
@@ -19,7 +24,7 @@ export function SiteHeader() {
           <span className="block text-xs text-muted">มาตี้กัน</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          {links.map((link) => {
+          {navigationLinks.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"

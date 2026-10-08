@@ -14,7 +14,11 @@ import AlertMessage from '@/components/ui/AlertMessage'
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') || '/'
+  const requestedNextPath = searchParams.get('next')
+  const nextPath =
+    requestedNextPath?.startsWith('/') && !requestedNextPath.startsWith('//')
+      ? requestedNextPath
+      : '/'
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -80,7 +84,7 @@ export default function LoginForm() {
           </label>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {error}
             </p>
           ) : null}

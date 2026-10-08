@@ -7,7 +7,7 @@ export default function SignOutButton() {
   return (
     <button
       onClick={async () => { await signOut(); router.push('/login'); router.refresh() }}
-      className="w-full py-2.5 text-sm font-medium transition border rounded-lg text-zinc-700 border-zinc-200 hover:bg-zinc-50"
+      className="w-full rounded-lg border border-line py-2.5 text-sm font-medium transition hover:bg-background"
     >
       ออกจากระบบ
     </button>

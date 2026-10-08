@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getSession } from "@/lib/auth/get-session";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 import {
   categoryLabel,
   joinModeLabel,
@@ -75,6 +77,7 @@ export default async function PartyPage({ params }) {
 
   const party = result.party;
   const slots = `${party.confirmedCount}/${party.maxMembers}`;
+  const session = getSupabaseEnv() ? await getSession() : null;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
@@ -128,6 +131,17 @@ export default async function PartyPage({ params }) {
         ) : (
           <p className="text-sm text-muted">ยังไม่มีรายละเอียดเพิ่ม</p>
         )}
+        {!session ? (
+          <div className="grid gap-2 rounded-xl border border-dashed border-line bg-background p-4">
+            <p className="text-sm text-muted">เข้าสู่ระบบเพื่อเข้าร่วมตี้นี้</p>
+            <Link
+              href={`/login?next=${encodeURIComponent(`/party/${party.id}`)}`}
+              className="w-fit rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
+            >
+              เข้าสู่ระบบเพื่อเข้าร่วม
+            </Link>
+          </div>
+        ) : null}
         <Link
           href={`/?category=${party.category}`}
           className="text-sm font-medium text-accent"

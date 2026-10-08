@@ -1,6 +1,8 @@
 import { Noto_Sans_Thai } from "next/font/google";
 
 import { SiteHeader } from "@/components/site-header";
+import { getSession } from "@/lib/auth/get-session";
+import { getSupabaseEnv } from "@/lib/supabase/env";
 
 import "./globals.css";
 
@@ -15,12 +17,15 @@ export const metadata = {
   description: "หาตี้ทำกิจกรรมสำหรับนักศึกษา มช.",
 };
 
-export default function RootLayout({ children }) {
-  console.log('✅ [Server] Rendering RootLayout')
+export default async function RootLayout({ children }) {
+  const session = getSupabaseEnv() ? await getSession() : null;
+  const isAdmin = session?.profile.role === "admin";
+  const isAuthenticated = Boolean(session);
+
   return (
     <html lang="th" className={`${notoSansThai.variable} h-full antialiased`}>
       <body className={`${notoSansThai.className} flex min-h-full flex-col`}>
-        <SiteHeader />
+        <SiteHeader isAdmin={isAdmin} isAuthenticated={isAuthenticated} />
         {children}
       </body>
     </html>

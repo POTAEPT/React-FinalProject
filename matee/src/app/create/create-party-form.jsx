@@ -18,7 +18,7 @@ function FieldError({ message, id }) {
   }
 
   return (
-    <p id={id} className="text-sm text-red-700 dark:text-red-300">
+    <p id={id} className="text-sm text-danger">
       {message}
     </p>
   );
@@ -257,7 +257,7 @@ export function CreatePartyForm({ defaultDate, minDate }) {
       </fieldset>
 
       {formError ? (
-        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+        <p role="alert" className="rounded-xl border border-danger/40 bg-danger-soft px-3 py-2 text-sm text-danger">
           {formError}
         </p>
       ) : null}
