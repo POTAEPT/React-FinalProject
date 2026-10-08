@@ -4,9 +4,14 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 
 import { sendPartyMessage } from "@/lib/chat/actions";
+import { MESSAGE_LIMIT, messageColumns, toMessage } from "@/lib/chat/message";
 import { createClient } from "@/lib/supabase/client";
 
 const MAX_LENGTH = 500;
+// Realtime reports SUBSCRIBED before it starts forwarding postgres_changes,
+// which takes a few seconds. Messages sent in that gap never arrive as events,
+// so the panel reloads the latest messages once after this delay.
+const CATCH_UP_DELAY_MS = 3000;
 
 const timeFormat = new Intl.DateTimeFormat("th-TH", {
   day: "numeric",
@@ -86,6 +91,33 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
   useEffect(() => {
     const supabase = createClient();
     let active = true;
+    let catchUpTimer = null;
+
+    async function catchUp() {
+      const { data, error } = await supabase
+        .from("party_messages")
+        .select(messageColumns)
+        .eq("party_id", partyId)
+        .order("created_at", { ascending: false })
+        .limit(MESSAGE_LIMIT);
+
+      if (error || !active) {
+        return;
+      }
+
+      const latest = (data ?? []).map(toMessage);
+
+      for (const message of latest) {
+        if (message.displayName && !profiles.has(message.userId)) {
+          profiles.set(message.userId, {
+            displayName: message.displayName,
+            avatarUrl: message.avatarUrl,
+          });
+        }
+      }
+
+      setMessages((current) => latest.reduce(mergeMessages, current));
+    }
 
     async function withProfile(row) {
       const message = {
@@ -144,10 +176,15 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED" && !catchUpTimer) {
+          catchUpTimer = setTimeout(catchUp, CATCH_UP_DELAY_MS);
+        }
+      });
 
     return () => {
       active = false;
+      clearTimeout(catchUpTimer);
       supabase.removeChannel(channel);
     };
   }, [partyId, profiles]);

@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { chatState } from "@/lib/chat/expiry";
-import { messageColumns, toMessage } from "@/lib/chat/queries";
+import { messageColumns, toMessage } from "@/lib/chat/message";
 import { createClient } from "@/lib/supabase/server";
 
 const uuidPattern =
