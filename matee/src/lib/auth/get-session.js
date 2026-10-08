@@ -5,11 +5,8 @@ import { requireSupabaseEnv } from '@/lib/supabase/env'
 /**
  * อธิบาย: ฟังก์ชันสำหรับดึง Session และ Profile ของผู้ใช้งาน โดยใช้ Local JWT Verification
  *
- * การทำงานกับ JWT (JSON Web Token):
- * ปกติแล้วเราจะต้องส่ง Token กลับไปถามเซิร์ฟเวอร์ (Network Call) ว่ายังใช้ได้ไหม
- * แต่ด้วยความลับของ JWT (Secret Key) ที่ตั้งไว้ใน `.env.local`
- * เราสามารถใช้ไลบรารี `jose` ตรวจสอบลายเซ็น (Signature) และวันหมดอายุ (Exp) 
- * ได้ทันทีบนฝั่งเครื่องเซิร์ฟเวอร์ของเราเอง (Locally) ซึ่งทำให้เร็วกว่ามาก!
+ * ใช้ Project JWKS ของ Supabase เพื่อตรวจสอบลายเซ็นและวันหมดอายุของ JWT
+ * บนเซิร์ฟเวอร์ โดยไม่เชื่อข้อมูลจาก cookie เพียงอย่างเดียว
  */
 export async function getSession() {
   const supabase = await createClient()
@@ -26,7 +23,7 @@ export async function getSession() {
       new URL(`${url}/auth/v1/.well-known/jwks.json`),
     )
 
-    // ยืนยัน JWT กับ Project JWKS
+    // 2. ยืนยันความถูกต้องของ Token กับ Project JWKS
     // หาก Token ปลอมหรือหมดอายุ โค้ดจะโยน Error ไปที่ block catch ทันที
     const { payload: verified } = await jwtVerify(session.access_token, jwks, {
       issuer: `${url}/auth/v1`,
@@ -40,7 +37,7 @@ export async function getSession() {
 
   if (typeof payload.sub !== 'string' || !payload.sub) return null
 
-  // ดึงข้อมูล Profile เพิ่มเติมจาก Database
+  // 3. ดึงข้อมูล Profile เพิ่มเติมจาก Database
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, display_name, role, avatar_url, banned_at')
@@ -54,7 +51,7 @@ export async function getSession() {
 
   if (!profile) return null
 
-  // 5. ส่งค่ากลับไปใช้งาน
+  // 4. ส่งค่ากลับไปใช้งาน
   return {
     user: {
       id: payload.sub,

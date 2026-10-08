@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/client";
 export async function signUp({ displayName, email, password }) {
   const trimmedDisplayName = displayName?.trim();
 
-  if (!trimmedDisplayName || trimmedDisplayName.length < 1) {
-    return { error: "ชื่อนี้มีการถูกใช้แล้วกรุณาเลือกชื่ออื่น" };
+  if (!trimmedDisplayName) {
+    return { error: "กรุณากรอกชื่อที่แสดง" };
   }
 
   if (trimmedDisplayName.length > 40) {
@@ -28,12 +28,8 @@ export async function signUp({ displayName, email, password }) {
     },
   });
 
-  if (error) {
-    return { error: error.message };
-  }
-
   return {
-    error: null,
+    error: error?.message || null,
     needsEmailConfirmation: !data.session,
   };
 }

@@ -1,16 +1,21 @@
-
 'use client'
-
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-
+import Link from 'next/link'
 import { signIn } from '@/lib/auth/actions'
+import FormField from '@/components/ui/FormField'
+import Button from '@/components/ui/Button'
+import AlertMessage from '@/components/ui/AlertMessage'
 
+/**
+ * อธิบาย: Component สำหรับฟอร์มเข้าสู่ระบบ
+ * หน้าที่คือจัดการ State (กำลังโหลด, ข้อผิดพลาด) และส่งข้อมูลไปหาฟังก์ชัน signIn
+ */
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get('next') || '/'
+  
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({ email: '', password: '' })
