@@ -617,7 +617,7 @@ export async function doSomething(partyId, input) {
 |---|---|---|
 | ≥ 72rem | **sidebar ซ้าย** (กว้าง 15rem) โลโก้เต็ม + ปุ่ม ≡, เมนู หาตี้ / ค้นหา / ตั้งตี้ / ตี้ของฉัน (+ โปรไฟล์ เมื่อล็อกอิน) guest มีปุ่มเข้าสู่ระบบ/สมัครด้านล่าง | คอลัมน์กลาง `md:max-w-2xl` เป็นการ์ด `rounded-3xl border` ชื่อหน้าอยู่เหนือการ์ด (`TITLES` ใน `app-shell.jsx`) และ footer © ใต้การ์ด จอ ≥ `xl` guest มีกล่อง "เข้าสู่ระบบหรือสมัครสมาชิก" ทางขวา |
 | `md` – 72rem | sidebar หดเหลือ **icon rail** (4.5rem) ปุ่ม ≡ ย้ายไปล่าง | เหมือนด้านบน |
-| < `md` (มือถือ) | **แถบบน** (เฉพาะหน้า `/` มีโลโก้ + ค้นหา + เข้าสู่ระบบ; หน้า `/account` มีค้นหา + เฟือง) และ**แถบล่างแบบไอคอน** (ตี้ของฉัน / หน้าหลัก / โปรไฟล์) | เต็มจอ ไม่มีกรอบการ์ด `body` มี `pb-20 md:pb-0` กันแถบล่างบัง |
+| < `md` (มือถือ) | **แถบบน** (เฉพาะหน้า `/` มีเมนู ≡ + โลโก้ + ค้นหา + เข้าสู่ระบบ; หน้า `/account` มีค้นหา + เฟือง) และ**แถบล่างแบบไอคอน** (ตี้ของฉัน / หน้าหลัก / โปรไฟล์) | เต็มจอ ไม่มีกรอบการ์ด `body` มี `pb-20 md:pb-0` กันแถบล่างบัง |
 
 - **ปุ่ม + ลอย** (`ตั้งตี้ใหม่`) มุมขวาล่างทุกหน้า ยกเว้น `/create`
 - **เมนู ≡** (`Dropdown` ใน `site-header.jsx`): แถว "ธีม" (กดเข้าไปเลือก 3 แบบ) และเมื่อล็อกอินมี "ตั้งค่าโปรไฟล์" (`/account/edit`) กับ "ออกจากระบบ" (สีแดง) ปิดด้วย Esc หรือคลิกข้างนอก
@@ -651,7 +651,7 @@ export async function doSomething(partyId, input) {
 ทุกตัวมีทางเลือกเมื่อผู้ใช้ตั้ง `prefers-reduced-motion` (ไม่ย่อ/ไม่หมุน เหลือแค่ fade/pulse) และ `prefers-reduced-transparency` (`.glass-card` เป็นสีทึบ) ของใหม่ต้องทำตามแบบนี้
 
 ### Boot splash
-`BootSplash` (`components/boot-splash.jsx`) คลุมทั้งจอด้วยโลโก้หมุนตั้งแต่ HTML แรก แล้วหายไปหลัง React ทำงานอย่างน้อย 400ms (+ fade 300ms) ถ้าปิด JavaScript `<noscript>` ใน layout จะซ่อนให้ ⚠️ ทำให้เนื้อหาที่ server render มาแล้วถูกบังจนกว่า JavaScript จะโหลด (Known issue)
+`BootSplash` (`components/boot-splash.jsx`) อยู่ใน HTML แรกแต่**ซ่อนไว้** CSS (`.boot-splash` ใน `globals.css`) จะแสดงโลโก้หมุนก็ต่อเมื่อผ่านไป 1 วินาทีแล้วหน้ายังรอ JavaScript อยู่ เมื่อ React ทำงาน splash จะหายทันที หรือ fade ออก 300ms ถ้าแสดงไปแล้ว (`.is-leaving`) ถ้าปิด JavaScript `<noscript>` ใน layout จะซ่อนให้ หน้าที่โหลดเร็วจึงไม่เห็น splash เลย
 
 ### รูปทรงและ layout
 - การ์ด/กล่องหลัก `rounded-3xl border border-line bg-card` · รายการใน feed คั่นด้วย `divide-y divide-line` ไม่ใช่การ์ดแยกใบ
@@ -724,7 +724,7 @@ export async function doSomething(partyId, input) {
 - **ข้อมูลทดสอบ:** ชื่อตี้ขึ้นต้นด้วย `[TEST]`, ใช้วันที่ปี **2099** เพื่อไม่ให้ชนกับข้อมูลจริง และ**ลบทิ้งใน `finally` ทุกครั้ง**
 - ทดสอบกรณีตี้จบแล้วหรือแชทหมดอายุ: host แก้ `event_date` ของตี้ทดสอบเป็นอดีต (RLS อนุญาต owner)
 - ทดสอบ Realtime: subscribe จาก node แล้ว**รอ 3–4 วินาที**หลัง `SUBSCRIBED` ก่อนส่งข้อมูล
-- ถ่ายภาพหน้าจอด้วย browser แบบ headless: `BootSplash` จะคลุมหน้าตอน load ให้ซ่อน `#boot-splash` ใน profile ของ browser ที่ใช้ทดสอบ (เช่น `userContent.css` ของ Firefox) โดยไม่แก้โค้ดแอป และค่าในฟอร์ม react-hook-form อาจยังว่างถ้าถ่ายก่อน hydrate
+- ถ่ายภาพหน้าจอด้วย browser แบบ headless: ค่าในฟอร์ม react-hook-form อาจยังว่างถ้าถ่ายก่อน hydrate และถ้าหน้าโหลดเกิน 1 วินาที `BootSplash` จะโผล่ ถ้าต้องการให้ซ่อน ให้ซ่อน `#boot-splash` ใน profile ของ browser ที่ใช้ทดสอบ (เช่น `userContent.css` ของ Firefox) โดยไม่แก้โค้ดแอป
 
 **Logic ล้วน** (`time.js`, `expiry.js`, `access.js`, `member-state.js`, `findConflict`, `my-party.js`) ทดสอบด้วย `node` ตรงๆ ได้ เพราะไม่มี dependency ฝั่ง server
 
@@ -783,16 +783,16 @@ npm run dev          # http://localhost:3000
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม Lagoon Sunset (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. **`getUser()` ซ้ำใน 1 request:** layout กับ page ใช้ `loadAccount()` (cache) ร่วมกันแล้ว แต่ middleware และ `getViewerMembership`/`CreateParty` ยังเรียก `getUser()` ของตัวเอง หน้าที่ล็อกอินจึงช้ากว่าหน้า guest ราว 2 เท่า แนวทางลด: ใช้ user จาก `cache()` ตัวเดียวทั้ง request และใช้ `getClaims()` ใน middleware (ดู `matee/Claude-QA.md` U-1, N-6)
-6. หน้า `/party/[id]` มีลิงก์ "ตี้อื่นในหมวด" ไป `/?category=` หลัง PR #49 หน้า `/` ยังกรองตามหมวดได้ แต่**ไม่มี chip หรือข้อความบอกว่ากำลังกรองอยู่** ควรเปลี่ยนลิงก์เป็น `/search?category=`
+6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)
 9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
 
-10. **Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม:** อย่างน้อย 0.7 วินาที (400ms + fade) และนานกว่านั้นบนเครื่องที่ JavaScript โหลดช้า ทั้งที่ server render เนื้อหามาครบแล้ว (ดู `matee/Claude-QA.md`)
-11. **มือถือ: guest ไม่มีที่เปลี่ยนธีม** เพราะเมนู ≡ อยู่แค่ใน sidebar ส่วนคนที่ล็อกอินเปลี่ยนได้จากเฟืองในหน้า `/account` เท่านั้น
-12. **`EditProfileForm` กด "เสร็จสิ้น" แล้วเรียก `router.back()` เสมอ** ถ้าเข้า `/account/edit` ตรงๆ จะย้อนออกนอกเว็บแทนที่จะไป `/account`
+10. ~~Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม~~ แก้แล้ว: แสดงเฉพาะเมื่อโหลดเกิน 1 วินาที (เดิม: อย่างน้อย 0.7 วินาทีทุกครั้ง)
+11. ~~มือถือ: guest ไม่มีที่เปลี่ยนธีม~~ แก้แล้ว: แถบบนมือถือของหน้า `/` มีเมนู ≡ (หน้าอื่นบนมือถือยังไม่มีแถบบน)
+12. ~~`EditProfileForm` เรียก `router.back()` เสมอ~~ แก้แล้ว: modal ที่เปิดจาก URL ตรงส่ง `closeHref="/account"` ต่อไปถึงฟอร์ม
 13. **`Modal` ไม่ขัง focus:** กด Tab แล้วออกไปที่หน้าข้างหลังได้
-14. **ปุ่ม "เข้าสู่ระบบ" บนแถบบนมือถือ (guest) ตัดเป็น 2 บรรทัด**
+14. ~~ปุ่ม "เข้าสู่ระบบ" บนแถบบนมือถือตัด 2 บรรทัด~~ แก้แล้ว (`whitespace-nowrap`)
 
 ---
 
