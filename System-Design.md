@@ -219,9 +219,10 @@ const partyIdPattern =
 ```
 LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPassword (browser client)
          ◄─ Supabase ส่ง session กลับ ─► @supabase/ssr เขียน cookie  sb-<project>-auth-token
-         ─► router.push(next) + router.refresh()
+         ─► window.location.replace(next)   (โหลดหน้าใหม่พร้อม session)
 ```
 - `lib/auth/actions.js` **ไม่ใช่ Server Action** (ไม่มี `"use server"`) เพราะใช้ browser client
+- หลังล็อกอินหรือสมัครสำเร็จ ให้ใช้ `window.location.replace(next)` (โหลดหน้าใหม่ทั้งหน้า) **ห้ามใช้ `router.push()` คู่กับ `router.refresh()`** เพราะ refresh จะดึง `/login` ซ้ำ ซึ่ง redirect คนที่ล็อกอินแล้ว และ navigation 2 ตัวจะแข่งกันจนวนได้
 - สมัคร: `signUp({ displayName, email, password })` ส่ง `options.data.display_name` ให้ trigger `handle_new_user` สร้างแถวใน `profiles`
 - ไม่มี route API สำหรับล็อกอิน การทดสอบอัตโนมัติจึงต้องล็อกอินผ่าน Supabase Auth แล้วนำ cookie มาใช้ (ดูหัวข้อ 17)
 - คนที่ล็อกอินอยู่แล้วเปิด `/login` หรือ `/register` จะถูก redirect ไป `?next=` หรือ `/` (`lib/auth/redirect-signed-in.js` เรียกในตัว page ไม่ได้ทำใน middleware)
@@ -637,7 +638,8 @@ export async function doSomething(partyId, input) {
 
 - ตัวฟอร์มอยู่ใน server component ชิ้นเดียว (`components/party/create-party.jsx`, `components/account/edit-profile.jsx`) ที่ทั้ง 2 แบบเรียกใช้ จึงมีฟอร์มเดียวให้ดูแล
 - `Modal` (`components/ui/modal.jsx`): `role="dialog" aria-modal="true"`, ปิดได้ด้วย Esc, คลิกฉากหลัง และปุ่ม ✕ ล็อก scroll ของ body และคืน focus เมื่อปิด มือถือเต็มจอ ส่วน `md` ขึ้นไปเป็นกล่อง `max-w-xl rounded-3xl`
-- **เพิ่ม modal ใหม่ต้องทำครบ 4 ไฟล์** ตามตารางด้านบน และฟอร์มที่ปิด modal เองหลังบันทึกต้องใช้ `closeHref` เดียวกับ `Modal` ห้ามใช้ `router.back()` อย่างเดียว (ดู Known issue)
+- **เพิ่ม modal ใหม่ต้องทำครบ 4 ไฟล์** ตามตารางด้านบน และฟอร์มที่ปิด modal เองหลังบันทึกต้องใช้ `closeHref` เดียวกับ `Modal` ห้ามใช้ `router.back()` อย่างเดียว
+- **ฟอร์มใน modal ต้องมี "ยกเลิก" และ "บันทึก"** (ดู `EditProfileForm`): ไม่บันทึกอะไรจนกว่าจะกดบันทึก (รูปที่เลือกเป็นแค่ preview), ปุ่มบันทึกกดไม่ได้จนกว่าจะมีการแก้ไข และ ยกเลิก / ✕ / Esc / คลิกฉากหลัง ปิดโดยไม่บันทึก
 
 ### Motion และวัสดุ
 | Class / ตัวแปร | ใช้ทำอะไร |
