@@ -396,7 +396,11 @@ export function SiteHeader({ account, theme: savedTheme }) {
           showPhoneBar ? "grid" : "hidden"
         }`}
       >
-        <span />
+        {/* The sidebar's ≡ menu is hidden on phones; this keeps the theme (and,
+            when signed in, settings and log out) within reach. */}
+        <div className="justify-self-start">
+          <MenuButton account={account} {...menuProps} />
+        </div>
         <Link href="/" className="flex items-center gap-2 leading-tight">
           <BrandLogo variant="full" className="h-8 w-auto" priority />
         </Link>
@@ -411,7 +415,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
           {account ? null : (
             <Link
               href="/login"
-              className="press rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background"
+              className="press whitespace-nowrap rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background"
             >
               เข้าสู่ระบบ
             </Link>
