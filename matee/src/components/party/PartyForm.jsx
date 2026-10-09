@@ -414,7 +414,7 @@ export function PartyForm({
         </div>
         {mode === "edit" ? (
           <p className="text-xs text-muted">
-            เปลี่ยนเป็น “เข้าได้เลย” แล้ว คำขอที่ค้างอยู่ยังรอคุณยืนยันหรือปฏิเสธเหมือนเดิม
+            เปลี่ยนเป็น “เข้าได้ทันที” แล้ว คำขอที่ค้างอยู่ยังรอคุณยืนยันหรือปฏิเสธเหมือนเดิม
           </p>
         ) : null}
         <FieldError message={errors.joinMode?.message} />

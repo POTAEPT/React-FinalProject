@@ -143,7 +143,9 @@ export default async function PartyPage({ params }) {
             <dt className="text-muted">สถานะ</dt>
             <dd className="mt-1 font-medium">{statusLabel(party)}</dd>
           </div>
-          {party.pendingCount != null ? (
+          {/* Pending requests only exist in approve mode; the count is only
+              known to the host (RLS), so others get null. */}
+          {party.pendingCount != null && party.joinMode === "approve" ? (
             <div>
               <dt className="text-muted">รอการยืนยัน</dt>
               <dd className="mt-1 font-medium">{party.pendingCount} คน</dd>

@@ -1,5 +1,7 @@
 import SignOutButton from '@/components/account/SignOutButton'
 
+export const metadata = { title: 'บัญชีถูกระงับ | MaTee' }
+
 export default function BannedPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">

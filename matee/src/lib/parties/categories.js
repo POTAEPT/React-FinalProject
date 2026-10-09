@@ -29,12 +29,12 @@ export const PARTY_CATEGORIES = [
 export const JOIN_MODES = [
   {
     value: "public",
-    label: "เข้าได้เลย",
+    label: "เข้าได้ทันที",
     hint: "กดเข้าร่วมแล้วเป็นสมาชิกทันที",
   },
   {
     value: "approve",
-    label: "รอเจ้าของยืนยัน",
+    label: "ต้องขออนุมัติ",
     hint: "ส่งคำขอ แล้วให้เจ้าของตี้ตอบรับ",
   },
 ];
