@@ -91,7 +91,7 @@ export function PartyForm({
     setError,
     setValue,
     subscribe,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm({
     resolver: zodResolver(createPartySchema),
     defaultValues,
@@ -151,8 +151,18 @@ export function PartyForm({
         return;
       }
 
+      // The saved values become the new baseline for "cancel changes".
+      reset(values);
       setNotice("บันทึกการแก้ไขแล้ว");
     });
+  }
+
+  // QA2-1: drop unsaved edits and go back to the last saved values.
+  function cancelEdits() {
+    reset();
+    setFormError(null);
+    setConflict(null);
+    setNotice(null);
   }
 
   return (
@@ -385,13 +395,28 @@ export function PartyForm({
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
-      >
-        {isPending ? pendingLabel : submitLabel}
-      </button>
+      <div className={mode === "edit" ? "grid gap-2 sm:grid-cols-2" : "grid"}>
+        {mode === "edit" ? (
+          <button
+            type="button"
+            onClick={cancelEdits}
+            disabled={isPending || !isDirty}
+            className="rounded-xl border border-line px-4 py-2.5 text-sm font-medium disabled:opacity-60 sm:order-first"
+          >
+            ยกเลิกการแก้ไข
+          </button>
+        ) : null}
+        <button
+          type="submit"
+          disabled={isPending || (mode === "edit" && !isDirty)}
+          className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
+        >
+          {isPending ? pendingLabel : submitLabel}
+        </button>
+      </div>
+      {mode === "edit" && !isDirty && !notice ? (
+        <p className="text-xs text-muted">ยังไม่มีอะไรเปลี่ยน แก้ช่องไหนก็ได้แล้วกดบันทึก</p>
+      ) : null}
     </form>
   );
 }
