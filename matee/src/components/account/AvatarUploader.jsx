@@ -1,34 +1,23 @@
 'use client'
-import { useState } from 'react'
 import Image from 'next/image'
-import { uploadAvatar } from '@/lib/avatar/actions'
+
+export const AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024
+
+// Same rules as uploadAvatar on the server, checked before anything is sent.
+export function avatarFileError(file) {
+  if (!AVATAR_TYPES.includes(file.type)) return 'รองรับเฉพาะไฟล์ JPEG, PNG, WEBP'
+  if (file.size > AVATAR_MAX_BYTES) return 'ขนาดไฟล์ต้องไม่เกิน 2MB'
+  return null
+}
 
 /**
- * Avatar for the profile header. The whole avatar is the "change photo"
- * control: tapping it opens the file picker and the preview updates at once.
+ * Avatar picker for the edit-profile form. Picking a file only previews it;
+ * the form uploads it when the user saves, so "ยกเลิก" really discards it.
+ *   previewUrl  the saved avatar, or a blob: URL of the picked file
+ *   onPick      called with the chosen File
  */
-export default function AvatarUploader({ userId, currentAvatarUrl, name = '' }) {
-  const [previewUrl, setPreviewUrl] = useState(currentAvatarUrl)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setLoading(true)
-    setError('')
-
-    const { publicUrl, error: uploadError } = await uploadAvatar({ userId, file })
-
-    if (uploadError) {
-      setError(uploadError)
-    } else {
-      setPreviewUrl(publicUrl)
-    }
-    setLoading(false)
-  }
-
+export default function AvatarUploader({ previewUrl, onPick, name = '', disabled = false, error = '' }) {
   return (
     <div className="flex flex-col items-end gap-2">
       <label
@@ -36,29 +25,42 @@ export default function AvatarUploader({ userId, currentAvatarUrl, name = '' }) 
         title="เปลี่ยนรูปโปรไฟล์ (JPEG, PNG, WEBP สูงสุด 2MB)"
       >
         {previewUrl ? (
-          <Image src={previewUrl} alt="" fill sizes="80px" className="object-cover" />
+          <Image
+            src={previewUrl}
+            alt=""
+            fill
+            sizes="80px"
+            // A picked file is a local blob: URL, which the image optimizer cannot fetch.
+            unoptimized={previewUrl.startsWith('blob:')}
+            className="object-cover"
+          />
         ) : (
           <span className="grid size-full place-items-center text-3xl font-medium text-soft-foreground">
             {name.slice(0, 1)}
           </span>
         )}
         <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100">
-          {loading ? 'กำลังอัปโหลด' : 'เปลี่ยนรูป'}
+          เปลี่ยนรูป
         </span>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleFileChange}
-          disabled={loading}
+          accept={AVATAR_TYPES.join(',')}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            // Reset so picking the same file again still fires onChange.
+            event.target.value = ''
+            if (file) onPick(file)
+          }}
+          disabled={disabled}
           aria-label="เปลี่ยนรูปโปรไฟล์"
           className="sr-only"
         />
       </label>
-      {error && (
-        <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-2 py-1 text-xs text-danger">
+      {error ? (
+        <p role="alert" className="max-w-48 rounded-xl border border-danger-line bg-danger-bg px-2 py-1 text-right text-xs text-danger">
           {error}
         </p>
-      )}
+      ) : null}
     </div>
   )
 }
