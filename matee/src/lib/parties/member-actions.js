@@ -316,26 +316,3 @@ export async function cancelParty(partyId) {
 
   return { ok: true };
 }
-
-// Hide a party from this user's feed. Skipping twice is not an error.
-export async function skipParty(partyId) {
-  const context = await loadContext(partyId);
-
-  if (context.error) {
-    return context.error;
-  }
-
-  const { supabase, user, party } = context;
-  const { error } = await supabase
-    .from("skips")
-    .insert({ party_id: party.id, user_id: user.id });
-
-  if (error && error.code !== "23505") {
-    console.error("skip party", error.message);
-    return fail("unknown", "ข้ามตี้ไม่สำเร็จ ลองอีกครั้ง");
-  }
-
-  revalidatePath("/");
-
-  return { ok: true };
-}

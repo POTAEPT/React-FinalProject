@@ -36,7 +36,6 @@ export async function PartyFeed({ filters, emptyMessage }) {
           <PartyCard
             party={party}
             conflict={findConflict(result.commitments, party.startMs, party.endMs, party.id)}
-            canSkip={Boolean(result.viewerId) && result.viewerId !== party.ownerId}
           />
         </li>
       ))}

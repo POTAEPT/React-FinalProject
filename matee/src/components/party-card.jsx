@@ -1,12 +1,11 @@
 import Link from "next/link";
 
-import { SkipButton } from "@/components/party/SkipButton";
 import { categoryLabel, joinModeLabel } from "@/lib/parties/categories";
 import { formatEventDate, formatTimeRange } from "@/lib/parties/time";
 
-// conflict: the viewer's party that overlaps this one, or null.
-// canSkip: a signed-in viewer who is not the host.
-export function PartyCard({ party, conflict = null, canSkip = false }) {
+// conflict: the viewer's party that overlaps this one, or null. It is shown
+// below the card's link, since a link cannot sit inside another link.
+export function PartyCard({ party, conflict = null }) {
   const slots = `${party.confirmedCount}/${party.maxMembers}`;
 
   return (
@@ -42,26 +41,20 @@ export function PartyCard({ party, conflict = null, canSkip = false }) {
         </div>
         <p className="text-sm text-muted">โดย {party.hostName}</p>
       </Link>
-      {conflict || canSkip ? (
-        <div className="flex items-start justify-between gap-3 border-t border-line px-4 py-3">
-          {conflict ? (
-            <p aria-disabled="true" className="text-sm text-muted">
-              ชนเวลากับ “
-              <Link
-                href={`/party/${conflict.partyId}`}
-                className="font-medium text-accent underline"
-              >
-                {conflict.title}
-              </Link>
-              ”
-            </p>
-          ) : (
-            <span />
-          )}
-          {canSkip ? (
-            <SkipButton partyId={party.id} title={party.title} />
-          ) : null}
-        </div>
+      {conflict ? (
+        <p
+          aria-disabled="true"
+          className="border-t border-line px-4 py-3 text-sm text-muted"
+        >
+          ชนเวลากับ “
+          <Link
+            href={`/party/${conflict.partyId}`}
+            className="font-medium text-accent underline"
+          >
+            {conflict.title}
+          </Link>
+          ”
+        </p>
       ) : null}
     </div>
   );
