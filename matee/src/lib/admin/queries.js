@@ -1,3 +1,5 @@
+import { isPartyCategory } from "@/lib/parties/categories";
+import { loadRelated, matchesSearch, partyColumns } from "@/lib/parties/queries";
 import { partyEndMs } from "@/lib/parties/time";
 import { createClient } from "@/lib/supabase/server";
 
@@ -71,4 +73,89 @@ export async function getAdminStats() {
       })),
     },
   };
+}
+
+export const ADMIN_PARTY_STATUSES = [
+  { value: "", label: "ทั้งหมด" },
+  { value: "open", label: "เปิดอยู่" },
+  { value: "finished", label: "จบแล้ว" },
+  { value: "cancelled", label: "ยกเลิก" },
+];
+
+// open, finished or cancelled, the same split as the dashboard.
+export function adminPartyStatus(party) {
+  if (party.status === "cancelled") return "cancelled";
+  return party.ended ? "finished" : "open";
+}
+
+// Every party, newest event first, including cancelled ones, finished ones and
+// those of banned hosts (the public feed hides all three).
+//   q         title, place or host name
+//   status    "", "open", "finished" or "cancelled"
+//   category  one of PARTY_CATEGORIES
+export async function listAdminParties({ q = "", status = "", category = "" } = {}) {
+  const supabase = await createClient();
+  let query = supabase
+    .from("parties")
+    .select(partyColumns)
+    .order("event_date", { ascending: false })
+    .order("event_time", { ascending: false })
+    .limit(500);
+
+  if (isPartyCategory(category)) {
+    query = query.eq("category", category);
+  }
+
+  if (status === "cancelled") {
+    query = query.eq("status", "cancelled");
+  } else if (status === "open" || status === "finished") {
+    query = query.eq("status", "open");
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("admin list parties", error.message);
+    return { ok: false, parties: [] };
+  }
+
+  const needle = q.trim().toLocaleLowerCase("th");
+  const parties = (await loadRelated(supabase, data ?? [])).filter(
+    (party) =>
+      (!status || adminPartyStatus(party) === status) &&
+      (matchesSearch(party, q.trim()) ||
+        party.hostName.toLocaleLowerCase("th").includes(needle)),
+  );
+
+  return { ok: true, parties };
+}
+
+// Every user, newest first. Email is not shown: it lives in auth.users, which
+// only the service role can read.
+export async function listAdminUsers({ q = "" } = {}) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_url, role, banned_at, created_at")
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error) {
+    console.error("admin list users", error.message);
+    return { ok: false, users: [] };
+  }
+
+  const needle = q.trim().toLocaleLowerCase("th");
+  const users = (data ?? [])
+    .map((user) => ({
+      id: user.id,
+      displayName: user.display_name,
+      avatarUrl: user.avatar_url,
+      role: user.role,
+      bannedAt: user.banned_at,
+      createdAt: user.created_at,
+    }))
+    .filter((user) => !needle || user.displayName.toLocaleLowerCase("th").includes(needle));
+
+  return { ok: true, users };
 }
