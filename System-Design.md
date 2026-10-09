@@ -538,9 +538,9 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 | `foreground` | `#0A0A0A` | `#F5F5F5` | ตัวอักษรหลัก |
 | `muted` | `#6B6B6B` | `#A0A0A0` | ตัวอักษรรอง |
 | `line` | `#E2E2E2` | `#2E2E2E` | เส้นขอบ / เส้นคั่น |
-| `accent` + `accent-foreground` | `#0A0A0A` + `#FFFFFF` | `#F5F5F5` + `#0A0A0A` | ปุ่มหลัก, ลิงก์, focus ring (เท่ากับ `foreground`) |
+| `accent` + `accent-foreground` | `#0A0A0A` + `#FFFFFF` | `#F5F5F5` + `#0A0A0A` | ลิงก์, focus ring (เท่ากับ `foreground`) |
 | `soft` + `soft-foreground` | `#ECECEC` + foreground | `#262626` + foreground | chip หมวด, avatar ตัวอักษร, สถานะรออนุมัติ, แถบประกาศ |
-| `brand` | `#1F7173` (teal เข้ม) | `#8AD6D1` (mint) | แถบที่นั่ง เส้น/พื้นผิวเน้น **ห้ามใช้เป็นสีตัวอักษร** |
+| `brand` + `brand-foreground` | `#1F7173` (teal เข้ม) + `#FFFFFF` | `#8AD6D1` (mint) + `#0A0A0A` | **ปุ่มหลัก**, แถบที่นั่ง, เส้นขอบของ chip ที่เลือก **ห้ามใช้ `brand` เป็นสีตัวอักษร** |
 | `brand-soft` | `#E3F4F3` | `#173434` | พื้นของเมนูที่เลือกใน sidebar และ chip ที่เลือกใน `/search` (คู่กับ `border-brand`) |
 | `highlight` + `highlight-foreground` | `#FF8C52` + `#0A0A0A` | `#FF8C52` + `#0A0A0A` | สถานะ "รอ": ปุ่มรอเจ้าของตี้อนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง, จุดบอกว่ามีตัวกรอง |
 | `danger` / `danger-bg` / `danger-line` | `#B3261E` / `#FDECEA` / `#F3B9B4` | `#FF8A80` / `#2A1513` / `#6E3A35` | error, แบนเนอร์ยกเลิก, ออกจากระบบ |
@@ -555,7 +555,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 | muted บน background (hover) | 4.80 | 6.52 |
 | muted บน soft (chip) | 4.51 (ใกล้เส้นพอดี ห้ามทำให้จางกว่านี้) | – |
 | foreground บน soft | 16.76 | 13.88 |
-| accent-foreground บน accent (ปุ่ม) | 19.80 | 18.16 |
+| brand-foreground บน brand (ปุ่มหลัก) | 5.73 | 11.90 |
 | danger บน card / บน danger-bg | 6.54 / 5.72 | 8.67 / 7.57 |
 | danger-foreground บน danger | 6.54 | 8.67 |
 | accent เป็น focus ring บน card | 19.80 | 18.16 |
@@ -568,7 +568,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 > `line` ต่ำกว่า 3:1 ใช้ได้กับ**เส้นคั่นตกแต่ง** แต่ช่องกรอกห้ามพึ่งเส้นขอบอย่างเดียวในการบอกว่าเป็นช่อง ต้องมีพื้น `background`, label หรือ placeholder ช่วย ส่วนโหมด `prefers-contrast: more` จะเปลี่ยน `--line` เป็น `muted` ให้เอง
 
 **กฎการใช้สี**
-- **ปุ่มหลัก** (ทั้งกรอบแอป, sheet และในเนื้อหา) = `bg-foreground text-background` หรือ `bg-accent text-accent-foreground` (ค่าเท่ากัน) · **ปุ่มรอง** = `border border-line` (มักเป็น `rounded-full`) · **ปุ่มอันตราย** = `bg-danger text-danger-foreground`
+- **ปุ่มหลัก** (ทั้งกรอบแอป, sheet และในเนื้อหา) = `bg-brand text-brand-foreground` (รวม `ui/Button`, ConfirmDialog, FAB ตั้งตี้) ห้ามใช้ `bg-foreground`/`bg-accent` เป็นปุ่มหลักอีก · **ปุ่มรอง** = `border border-line` (มักเป็น `rounded-full`) · **ปุ่มอันตราย** = `bg-danger text-danger-foreground`
 - **chip หมวด / แถบประกาศ** = `bg-soft text-soft-foreground` · **ที่เลือกอยู่** (เมนู sidebar, chip ใน `/search`) = `bg-brand-soft` (+ `border-brand` สำหรับ chip)
 - **สถานะรอ** (ปุ่มรออนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง) = `bg-highlight text-highlight-foreground` · ยกเลิก = `danger*` · ออกแล้ว = `border-line text-muted`
 - **ใส่สีเพิ่มต้องใช้ token จากโลโก้เท่านั้น** (`brand`, `brand-soft`, `highlight`) และใช้เป็นจุดเน้น ไม่ใช่พื้นใหญ่ของหน้า
