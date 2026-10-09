@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { fail } from "@/lib/action-result";
 import {
   findConflict,
   getMyCommitments,
@@ -13,10 +14,6 @@ import { createClient } from "@/lib/supabase/server";
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function fail(code, message) {
-  return { ok: false, code, message };
-}
 
 // Host only: edit a party before it starts.
 //   - title, category, location, detail, capacity and join mode can change

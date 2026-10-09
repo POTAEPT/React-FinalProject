@@ -56,10 +56,10 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl, closeHr
 
     startTransition(async () => {
       if (file) {
-        const { error: uploadError } = await uploadAvatar({ userId, file })
+        const upload = await uploadAvatar({ userId, file })
 
-        if (uploadError) {
-          setError(`บันทึกรูปไม่สำเร็จ: ${uploadError}`)
+        if (!upload.ok) {
+          setError(upload.message)
           return
         }
 
@@ -71,7 +71,7 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl, closeHr
         const result = await updateDisplayName(name)
 
         if (!result.ok) {
-          setError(result.error)
+          setError(result.message)
           return
         }
       }

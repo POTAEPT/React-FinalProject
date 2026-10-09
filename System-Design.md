@@ -435,7 +435,8 @@ party_members                 party_messages
 ```js
 "use server";
 export async function doSomething(partyId, input) {
-  // 1. ตรวจ input ด้วย regex/zod → { ok:false, code:"not_found" | "invalid" }
+  // ความล้มเหลวทุกแบบคืนผ่าน fail(code, message) จาก lib/action-result.js
+  // 1. ตรวจ input ด้วย regex/zod → fail("not_found" | "invalid", ...)
   // 2. const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser();
   //    ไม่มี user → code:"unauthenticated"
   // 3. โหลดข้อมูลที่ต้องใช้ตัดสิน (ตี้, แถวสมาชิก)
@@ -463,11 +464,11 @@ export async function doSomething(partyId, input) {
 | `decideRequest(memberId, 'confirmed'\|'rejected')`, `cancelParty(id)` | `lib/parties/member-actions.js` | ข้างบน + `/manage/[id]` |
 | `updateParty(partyId, input)` (ส่งเข้า PartyForm ด้วย `.bind(null, partyId)`) | `lib/parties/party-actions.js` | `/`, `/party/[id]`, `/manage/[id]`, `/my-party` |
 | `sendPartyMessage(id, body)` | `lib/chat/actions.js` | – (อัปเดตผ่าน Realtime) |
-| `uploadAvatar({ userId, file })` | `lib/avatar/actions.js` | – |
-| `updateDisplayName(name)` | `lib/auth/profile-actions.js` | `/` (layout) ⚠️ คืน `{ ok, error }` ไม่ตรงมาตรฐาน |
+| `uploadAvatar({ userId, file })` → `{ ok, publicUrl }` | `lib/avatar/actions.js` | `/` (layout) |
+| `updateDisplayName(name)` | `lib/auth/profile-actions.js` | `/` (layout) |
 | admin: `cancelPartyAsAdmin`, `deletePartyAsAdmin`, `setUserBannedAsAdmin`, `deleteMessageAsAdmin` | `lib/admin/actions.js` (branch 22) | `/`, `/admin/*`, `/party/[id]` |
 
-> ⚠️ `lib/admin/actions.js` และ `lib/avatar/actions.js` ยังคืน `{ ok:false, error }` หรือ `{ error }` ซึ่งไม่ตรงมาตรฐาน 11.1 ควรปรับให้ตรงเมื่อแก้ไฟล์นั้นครั้งถัดไป
+> ⚠️ `lib/admin/actions.js` (branch 22) ยังคืน `{ ok:false, error }` ซึ่งไม่ตรงมาตรฐาน 11.1 จะปรับหลัง branch 22 merge (action อื่นตรงมาตรฐานแล้ว)
 
 ---
 
@@ -757,7 +758,7 @@ npm run dev          # http://localhost:3000
 ### Known issues / หนี้ทางเทคนิค
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
-3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
+3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** ~~avatar/profile~~ แก้แล้ว 2026-10-09 (ใช้ `fail()` จาก `lib/action-result.js` เหมือน party/chat) เหลือ admin ใช้ `{ ok:false, error }` รอทำหลัง branch 22 merge
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
@@ -783,7 +784,7 @@ npm run dev          # http://localhost:3000
 
 ระหว่างเขียน
 - [ ] อ่านใน Server Component, เขียนใน Server Action (`"use server"`)
-- [ ] ทุก action: ตรวจ input → `getUser()` → ตรวจสิทธิ์ → เขียน → แปลง error → `revalidatePath` → คืน `{ ok, code, message }`
+- [ ] ทุก action: ตรวจ input → `getUser()` → ตรวจสิทธิ์ → เขียน → แปลง error → `revalidatePath` → คืน `{ ok: true, ... }` หรือ `fail(code, message)` จาก `lib/action-result.js`
 - [ ] ข้อความ UI เป็นภาษาไทยตามหัวข้อ 10.6 และ 14
 - [ ] ใช้ design tokens ไม่ hard-code สี
 - [ ] เวลาใช้ helper ใน `time.js` (Asia/Bangkok) เสมอ
