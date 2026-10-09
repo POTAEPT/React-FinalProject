@@ -3,6 +3,12 @@ import { PartyFeed } from "@/components/party-feed";
 import { loadAccount } from "@/lib/auth/account";
 import { readFeedFilters } from "@/lib/parties/filters";
 
+// Rendering: SSR (ตั้งใจ) — render ใหม่ทุก request
+// ฟีดขึ้นกับคนที่ดู: ปุ่มบนการ์ด (เข้าร่วม / รออนุมัติ / ชนเวลา) มาจาก session
+// และตี้ที่ตัวเองมีอยู่ ส่วนจำนวนที่นั่งและตี้ที่เต็มหรือเริ่มไปแล้วต้องเป็นค่าปัจจุบัน
+// SSG/ISR จะเสิร์ฟหน้าเดียวกันให้ทุกคนจาก cache ซึ่งผิดทั้งสองข้อ
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "หาตี้ | MaTee",
 };

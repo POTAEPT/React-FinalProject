@@ -20,6 +20,9 @@ export const metadata = {
   description: "หาตี้ทำกิจกรรมสำหรับนักศึกษา มช.",
 };
 
+// Rendering: layout อ่าน cookie (ธีม + บัญชีที่ล็อกอิน) ทุก request ทำให้ทุกหน้า
+// เป็น SSR หน้าที่ดึงข้อมูลหลักประกาศ dynamic = "force-dynamic" พร้อมเหตุผลไว้เองด้วย
+// (/, /search, /party/[id], /my-party, /manage/[id])
 export default async function RootLayout({ children, modal }) {
   const [cookieStore, account] = await Promise.all([cookies(), loadAccount()]);
   const theme = readTheme(cookieStore.get(THEME_COOKIE)?.value);

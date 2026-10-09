@@ -18,6 +18,10 @@ import {
 } from "@/lib/parties/queries";
 import { bangkokToday, formatEventDate, formatTimeRange } from "@/lib/parties/time";
 
+// Rendering: SSR (ตั้งใจ) — เฉพาะเจ้าของตี้ (ตรวจทุก request) และคิวคำขอต้อง
+// เป็นค่าล่าสุด หน้านี้ยัง refresh เองทุก 15 วินาที (<AutoRefresh>) เพื่อดึง SSR ใหม่
+export const dynamic = "force-dynamic";
+
 const partyIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 

@@ -204,6 +204,8 @@ React-FinalProject/
 
 **หน้าที่ไม่มีกรอบแอป:** `/login`, `/register` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
 
+**การ render (SSR แบบตั้งใจ):** layout อ่าน cookie ทุก request ทุกหน้าจึงเป็น SSR และหน้าที่ดึงข้อมูลหลัก (`/`, `/search`, `/party/[id]`, `/my-party`, `/manage/[id]`) ประกาศ `export const dynamic = "force-dynamic"` พร้อมคอมเมนต์เหตุผลไว้ที่ต้นไฟล์ เพราะข้อมูลขึ้นกับคนที่ดู (ปุ่ม, RLS, การชนเวลา) และจำนวนที่นั่งต้องเป็นค่าปัจจุบัน ไม่ใช้ SSG/ISR หน้าใหม่ที่ดึงข้อมูลให้ทำแบบเดียวกัน (โปรเจกต์ไม่ได้เปิด `cacheComponents` จึงยังใช้ route segment config ได้)
+
 **Route ที่ proxy บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` (รวม `/account/edit`) ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
 
 **รูปแบบ id ใน URL:** ทุกหน้าที่รับ `[id]` ต้องเช็ค UUID ด้วย regex ก่อน query ถ้าไม่ผ่านให้เรียก `notFound()`

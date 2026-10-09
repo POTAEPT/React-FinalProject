@@ -9,6 +9,11 @@ import { formatEventDate, formatTimeRange } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+// Rendering: SSR (ตั้งใจ) — เป็นข้อมูลส่วนตัวของคนที่ล็อกอิน (ตี้ที่เป็นเจ้าของ /
+// เข้าร่วม / รออนุมัติ) ห้าม cache ร่วมกันระหว่างผู้ใช้ และต้องเห็นสถานะล่าสุดหลัง
+// action ต่างๆ revalidatePath("/my-party")
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "ตี้ของฉัน | MaTee",
 };
