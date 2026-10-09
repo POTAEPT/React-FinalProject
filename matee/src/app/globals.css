@@ -25,8 +25,10 @@
   --accent: light-dark(#0a0a0a, #f5f5f5);
   --accent-foreground: light-dark(#ffffff, #0a0a0a);
   /* Logo accents. brand is a fill or line, never text: deep teal on white
-     keeps the seat bar 4:1 against its track; mint on black. */
+     keeps the seat bar 4:1 against its track; mint on black. It is also the
+     primary action color (brand-foreground text: 5.7:1 light, 11.9:1 dark). */
   --brand: light-dark(#1f7173, #8ad6d1);
+  --brand-foreground: light-dark(#ffffff, #0a0a0a);
   --brand-soft: light-dark(#e3f4f3, #173434);
   --soft: light-dark(#ececec, #262626);
   --soft-foreground: var(--foreground);
@@ -55,6 +57,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-soft: var(--soft);
   --color-soft-foreground: var(--soft-foreground);

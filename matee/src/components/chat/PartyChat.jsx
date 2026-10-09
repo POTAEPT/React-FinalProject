@@ -294,7 +294,7 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
           <button
             type="submit"
             disabled={isPending || draft.trim().length === 0}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-60"
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-medium text-brand-foreground disabled:opacity-60"
           >
             {isPending ? "กำลังส่ง..." : "ส่ง"}
           </button>

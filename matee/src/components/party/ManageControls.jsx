@@ -6,7 +6,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cancelParty, decideRequest } from "@/lib/parties/member-actions";
 
 const primaryClass =
-  "rounded-xl bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground disabled:opacity-60";
+  "rounded-xl bg-brand px-3 py-1.5 text-sm font-medium text-brand-foreground disabled:opacity-60";
 const secondaryClass =
   "rounded-xl border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60";
 const dangerClass =

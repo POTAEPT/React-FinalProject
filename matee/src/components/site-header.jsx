@@ -282,7 +282,7 @@ function GuestSidebar() {
     <div className="grid gap-2">
       <Link
         href="/login"
-        className="rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
+        className="press rounded-xl bg-brand px-4 py-3 text-center text-sm font-semibold text-brand-foreground"
       >
         เข้าสู่ระบบ
       </Link>
@@ -415,7 +415,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
           {account ? null : (
             <Link
               href="/login"
-              className="press whitespace-nowrap rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background"
+              className="press whitespace-nowrap rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-brand-foreground"
             >
               เข้าสู่ระบบ
             </Link>

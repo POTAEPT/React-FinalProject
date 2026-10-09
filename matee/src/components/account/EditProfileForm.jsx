@@ -129,7 +129,7 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl, closeHr
         <button
           type="submit"
           disabled={isPending || !dirty}
-          className="press rounded-2xl bg-foreground px-4 py-3.5 text-base font-semibold text-background disabled:opacity-60"
+          className="press rounded-2xl bg-brand px-4 py-3.5 text-base font-semibold text-brand-foreground disabled:opacity-60"
         >
           {isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </button>

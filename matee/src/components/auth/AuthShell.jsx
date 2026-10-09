@@ -7,7 +7,7 @@ export const authInputClass =
   "h-14 w-full rounded-2xl border border-line bg-card px-4 text-base outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 export const authButtonClass =
-  "h-14 w-full rounded-2xl bg-accent text-base font-semibold text-accent-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+  "h-14 w-full rounded-2xl bg-brand text-base font-semibold text-brand-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
 
 function Ribbon() {
   return (

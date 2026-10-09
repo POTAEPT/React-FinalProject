@@ -145,7 +145,7 @@ export function PartySearch() {
             {activeFilters.length ? (
               <span
                 aria-hidden="true"
-                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-highlight"
+                className="absolute top-1.5 right-1.5 size-2 rounded-full bg-brand"
               />
             ) : null}
           </button>
@@ -206,7 +206,7 @@ export function PartySearch() {
           </label>
           <button
             type="submit"
-            className="press m-2 rounded-2xl bg-foreground px-4 py-3 text-base font-semibold text-background"
+            className="press m-2 rounded-2xl bg-brand px-4 py-3 text-base font-semibold text-brand-foreground"
           >
             ใช้ตัวกรอง
           </button>

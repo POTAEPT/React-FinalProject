@@ -26,7 +26,7 @@ export default function GlobalError({ error, reset }) {
       </Link>
       <button
         onClick={() => reset()}
-        className="rounded-xl bg-accent px-6 py-2.5 text-sm font-medium text-accent-foreground transition hover:opacity-90"
+        className="rounded-xl bg-brand px-6 py-2.5 text-sm font-medium text-brand-foreground transition hover:opacity-90"
       >
         ลองใหม่อีกครั้ง
       </button>
