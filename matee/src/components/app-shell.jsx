@@ -46,7 +46,8 @@ export function AppShell({ account, theme, children }) {
           © 2026 MaTee · หาตี้ทำกิจกรรมสำหรับนักศึกษา มช.
         </p>
       </div>
-      {pathname === "/create" ? null : (
+      {/* No "ตั้งตี้" button where it would cover row actions (admin lists). */}
+      {pathname === "/create" || pathname.startsWith("/admin") ? null : (
         <Link
           href="/create"
           aria-label="ตั้งตี้ใหม่"
