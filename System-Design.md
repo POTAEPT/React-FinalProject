@@ -3,7 +3,7 @@
 > เอกสารออกแบบระบบของ MaTee (มาตี้กัน) สำหรับทุกคนในทีมและ AI agent ที่เขียนโค้ดในโปรเจกต์นี้
 > เป้าหมายคือให้ทุกคนเขียนโค้ดไปในทางเดียวกัน: โครงสร้างไฟล์, รูปแบบ Server Action, การเช็คสิทธิ์, ข้อความ UI และวิธีทดสอบ
 >
-> **อัปเดตล่าสุด:** 2026-10-09 · อ้างอิงโค้ดบน branch `development` (มีงาน #3, #5, #6, PR #49 "Restyle the app like Threads" และ PR #50 ธีมขาวดำ) และงาน admin บน branch `22-sub-issue-1-admin-access-and-dashboard`
+> **อัปเดตล่าสุด:** 2026-10-09 · อ้างอิงโค้ดบน branch `development` (มีงาน #3, #5, #6, PR #49 "Restyle the app like Threads" และ PR #50 ธีมขาวดำ) และงาน admin (#7: #22–#24) บน branch `7-admin-moderation` ที่ย้ายมาจาก branch `22-sub-issue-1-admin-access-and-dashboard`
 
 ## สารบัญ
 1. [วิธีใช้เอกสารนี้](#1-วิธีใช้เอกสารนี้)
@@ -160,7 +160,7 @@ React-FinalProject/
             ├── parties/      queries · member-actions · my-commitments · member-state
             │                 my-party · schema · time · categories · filters
             ├── chat/         queries · actions · message · expiry · access
-            └── admin/        (branch 22) require-admin · actions
+            └── admin/        require-admin · queries · actions
 ```
 
 ### ชั้นของโค้ดใน `lib/<domain>/`
@@ -198,8 +198,10 @@ React-FinalProject/
 | `/account` | User | Server | โปรไฟล์ (ชื่อ, อีเมล, role, avatar), จำนวนตี้ที่ตั้ง/เข้าร่วม, แท็บ `?tab=joined`, ปุ่มแก้ไขโปรไฟล์และออกจากระบบ | ✅ |
 | `/account/edit` | User | Modal บนโปรไฟล์ | แก้ชื่อที่แสดง (`updateDisplayName`) และเปลี่ยนรูป (`uploadAvatar`) เข้า URL ตรงแล้วปิดจะไป `/account` | ✅ |
 | `/banned` | ทุกคน | Server | หน้าแจ้งว่าถูกแบน | ✅ |
-| `/categories`, `/discover` | ทุกคน | Server | กริดหมวด / redirect ไป `/` (หน้าที่ซ้ำกับ `/search` แล้ว ควรตัดสินใจก่อน merge) | 🌿 branch 22 |
-| `/admin`, `/admin/parties`, `/admin/users`, `/admin/parties/[id]` | Admin (คนอื่นได้ 404) | Server + client ปุ่ม | dashboard, จัดการตี้, แบนผู้ใช้, ดูแลแชท | 🌿 branch 22 (#7, #24) |
+| `/admin` | Admin (คนอื่นรวม guest ได้ 404) | Server | ตัวเลข: ตี้เปิดอยู่/จบแล้ว/ยกเลิก, ผู้ใช้ (+ ถูกระงับ), การเข้าร่วม (confirmed ไม่นับ host), คำขอรออนุมัติ, ข้อความ · สมัครล่าสุด 5 คน · แท็บ ภาพรวม/ตี้/ผู้ใช้ (`app/admin/layout.jsx`) | ✅ #22 |
+| `/admin/parties` | Admin | Server + client ปุ่ม | ทุกตี้ (รวมจบแล้ว ยกเลิก และของ host ที่ถูกระงับ) · ค้นหาชื่อตี้/สถานที่/เจ้าของ · กรองสถานะและหมวดผ่าน URL (`?q=&status=&category=`) · ยกเลิก (เฉพาะที่ยังไม่จบ) / ลบ ผ่าน ConfirmDialog | ✅ #23 |
+| `/admin/users` | Admin | Server + client ปุ่ม | ชื่อ, บทบาท, วันที่สมัคร, สถานะระงับ · ค้นหาชื่อ · ระงับ/ยกเลิกการระงับ (แถวของตัวเองไม่มีปุ่ม) ไม่แสดงอีเมลเพราะอยู่ใน `auth.users` ที่อ่านได้ด้วย service role เท่านั้น | ✅ #23 |
+| `/admin/parties/[id]` | Admin | Server + client ปุ่ม | รายละเอียดตี้ + transcript ทั้งหมดที่ยังเก็บอยู่ (แจ้งเมื่อแชทใกล้/หมดอายุ) · ลบข้อความ, ยกเลิก/ลบตี้ (ลบแล้วกลับไปรายการ) | ✅ #24 |
 
 **หน้าที่ไม่มีกรอบแอป:** `/login`, `/register`, `/banned` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
 
@@ -234,7 +236,8 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 | รู้ว่าใครเรียก ใน Server Component (page, layout, query ใน `lib/*/queries.js`) | `await getCurrentUser()` จาก `lib/auth/current-user.js` | `getUser()` ห่อด้วย `cache()` ของ React ทั้ง layout, page และ query ใน request เดียวกันจึงตรวจ token กับ Supabase Auth ครั้งเดียว คืน `null` สำหรับ guest |
 | รู้ว่าใครเรียก ใน Server Action | `const { data: { user } } = await supabase.auth.getUser()` | `cache()` ไม่มีผลใน Server Action จึงเรียกเองทุก action ตรวจ token กับ Supabase Auth จึงเชื่อถือได้ |
 | ต้องการ claims ของ JWT + profile (`/account`, `/account/edit`) | `getSession()` จาก `lib/auth/get-session.js` | ตรวจลายเซ็น JWT กับ JWKS ด้วย `jose` แล้วโหลด profile (ต้องตั้ง JWT Signing Keys เป็นแบบ asymmetric) |
-| ชื่อ + avatar ของคนที่ล็อกอิน (shell, composer, ฟอร์มตั้งตี้) | `loadAccount()` จาก `lib/auth/account.js` | ใช้ `getCurrentUser()` แล้วโหลด profile ห่อด้วย `cache()` เหมือนกัน คืน `null` สำหรับ guest |
+| ชื่อ + avatar + `isAdmin` ของคนที่ล็อกอิน (shell, composer, ฟอร์มตั้งตี้, `requireAdmin`) | `loadAccount()` จาก `lib/auth/account.js` | ใช้ `getCurrentUser()` แล้วโหลด profile ห่อด้วย `cache()` เหมือนกัน คืน `{ id, displayName, avatarUrl, isAdmin }` หรือ `null` สำหรับ guest · `isAdmin` = role admin และไม่ถูกระงับ |
+| หน้า admin | `await requireAdmin()` จาก `lib/admin/require-admin.js` บรรทัดแรกของทุกหน้า (และใน layout) | ไม่ใช่ admin → `notFound()` ส่วน admin action เช็ค `loadAccount()?.isAdmin` เองแล้วคืน `fail("not_admin")` |
 | **ห้ามใช้** | `supabase.auth.getSession()` เพื่อตัดสินสิทธิ์ | อ่าน cookie ตรงๆ โดยไม่ตรวจ ปลอมได้ |
 
 ### middleware.js (ทุก request ยกเว้นไฟล์ static)
@@ -464,11 +467,14 @@ export async function doSomething(partyId, input) {
 | `decideRequest(memberId, 'confirmed'\|'rejected')`, `cancelParty(id)` | `lib/parties/member-actions.js` | ข้างบน + `/manage/[id]` |
 | `updateParty(partyId, input)` (ส่งเข้า PartyForm ด้วย `.bind(null, partyId)`) | `lib/parties/party-actions.js` | `/`, `/party/[id]`, `/manage/[id]`, `/my-party` |
 | `sendPartyMessage(id, body)` | `lib/chat/actions.js` | – (อัปเดตผ่าน Realtime) |
+| `deletePartyMessage(messageId)` (เฉพาะ host ของตี้นั้น) | `lib/chat/actions.js` | – (แชทที่เปิดอยู่ลบเองผ่าน Realtime DELETE) |
 | `uploadAvatar({ userId, file })` → `{ ok, publicUrl }` | `lib/avatar/actions.js` | `/` (layout) |
 | `updateDisplayName(name)` | `lib/auth/profile-actions.js` | `/` (layout) |
-| admin: `cancelPartyAsAdmin`, `deletePartyAsAdmin`, `setUserBannedAsAdmin`, `deleteMessageAsAdmin` | `lib/admin/actions.js` (branch 22) | `/`, `/admin/*`, `/party/[id]` |
+| admin: `cancelPartyAsAdmin(id)` (เฉพาะตี้ที่ยังไม่จบ), `deletePartyAsAdmin(id)` | `lib/admin/actions.js` | `/`, `/search`, `/my-party`, `/party/[id]`, `/manage/[id]`, `/admin` (layout) |
+| admin: `setUserBannedAsAdmin(userId, boolean)` (ห้ามตัวเอง) | `lib/admin/actions.js` | `/` (layout) ทั้งเว็บ เพราะฟีดและหน้าตี้ซ่อนตี้ของคนที่ถูกระงับ |
+| admin: `deleteMessageAsAdmin(messageId)` | `lib/admin/actions.js` | `/admin`, `/admin/parties/[id]`, `/party/[id]` |
 
-> ⚠️ `lib/admin/actions.js` (branch 22) ยังคืน `{ ok:false, error }` ซึ่งไม่ตรงมาตรฐาน 11.1 จะปรับหลัง branch 22 merge (action อื่นตรงมาตรฐานแล้ว)
+> ทุก action คืน `{ ok, code, message }` แล้ว admin action และ `deletePartyMessage` อ่านแถวที่ถูกแก้กลับมา (`.select("id")`) ถ้า RLS ไม่ให้หรือไม่มีแถวจะได้ `not_found`/`not_allowed` แทนการคืน ok เงียบๆ
 
 ---
 
@@ -751,19 +757,19 @@ npm run dev          # http://localhost:3000
 | #6 | join/leave/approve/time conflict + QA รอบ 1–2 | ✅ merge เข้า `development` แล้ว (PR #48) |
 | – | Restyle แบบ Threads (sidebar, `/search`, modal, โปรไฟล์, โลโก้, splash) | ✅ merge เข้า `development` แล้ว (PR #49) |
 | – | ธีมขาวดำ (`light-dark()`) | ✅ merge เข้า `development` แล้ว (PR #50) |
-| #7 (+#22, #23, #24) | admin + moderation | 🌿 branch `22-...` / `7-...` |
+| #7 (+#22, #23, #24) | admin + moderation | ✅ ทำบน branch `7-admin-moderation` (ย้ายจาก branch 22 ที่ค้างอยู่ก่อน restyle) เหลือ `proxy.js` (ดู Known issue 2) |
 | #8 | จำนวนคน live บนการ์ด | ⏳ (ใช้แพทเทิร์นในหัวข้อ 13) |
 | #9 | deploy Vercel + smoke test | ⏳ |
 
 ### Known issues / หนี้ทางเทคนิค
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
-2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
-3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** ~~avatar/profile~~ แก้แล้ว 2026-10-09 (ใช้ `fail()` จาก `lib/action-result.js` เหมือน party/chat) เหลือ admin ใช้ `{ ok:false, error }` รอทำหลัง branch 22 merge
+2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ทำเป็นงานสุดท้ายของ #7 หลังคุยแผนกับทีม (พร้อมเปลี่ยนเป็น `getClaims()` และวิธีเช็คแบน) การเปลี่ยนชื่อจาก branch 22 ไม่ได้ย้ายมา
+3. ~~**รูปแบบผลลัพธ์ของ action ไม่ตรงกัน**~~ แก้แล้ว 2026-10-09: ทุก action ใช้ `fail()` จาก `lib/action-result.js` รวม admin
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
-8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)
+8. ~~ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)~~ แก้แล้ว: host มีปุ่ม "ลบ" 2 จังหวะในแชท (`DeleteMessageButton`) admin ลบได้ที่ `/admin/parties/[id]`
 9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
 
 10. ~~Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม~~ แก้แล้ว: แสดงเฉพาะเมื่อโหลดเกิน 1 วินาที (เดิม: อย่างน้อย 0.7 วินาทีทุกครั้ง)
@@ -788,7 +794,7 @@ npm run dev          # http://localhost:3000
 - [ ] ข้อความ UI เป็นภาษาไทยตามหัวข้อ 10.6 และ 14
 - [ ] ใช้ design tokens ไม่ hard-code สี
 - [ ] เวลาใช้ helper ใน `time.js` (Asia/Bangkok) เสมอ
-- [ ] ไม่แก้ไฟล์ของ feature อื่นที่เพื่อนรับผิดชอบโดยไม่จำเป็น เช่น auth หรือ admin
+- [ ] ไม่แก้ไฟล์ของ feature อื่นที่เพื่อนรับผิดชอบโดยไม่จำเป็น เช่น auth
 - [ ] ไม่เพิ่ม dependency และไม่ใช้ service role key
 - [ ] หน้าใหม่: ใช้ `<main className="flex w-full flex-1 flex-col">` ภายใน `AppShell` ถ้าเป็นหน้าเต็มจอ (ไม่มี sidebar) ให้เพิ่มใน `BARE_PATHS` และถ้าเป็นหน้าหลักให้เพิ่มลิงก์ใน `links` ของ `site-header.jsx`
 - [ ] ฟอร์มที่ควรเปิดทับหน้าเดิม: ทำเป็น modal ตามหัวข้อ 14 (ครบ 4 ไฟล์) และปุ่ม/ลิงก์ใหม่ใส่ class `press`
