@@ -1,72 +1,45 @@
 @import "tailwindcss";
 
 /*
- * "Lagoon Sunset" theme. Values and contrast notes: System-Design.md, section 14.
- * brand (#359FA0) is for surfaces, stripes and icons only: as text or a focus
- * ring on cream it falls below WCAG contrast, so focus rings use accent.
+ * Monochrome theme: black, white and grays only. The one exception is the
+ * danger set (errors, log out, cancelled), kept red so a warning still reads
+ * as a warning.
+ *
+ * Each token is written once as light-dark(light, dark). Which side applies
+ * comes from color-scheme: "light dark" follows the system, and the theme menu
+ * pins one side with data-theme on <html> (see app/layout.jsx). No second
+ * dark block to keep in sync.
+ *
+ * Roles: card is the page and column surface; background is the slightly
+ * different tint for hover and active fills, so it must stay distinct from card.
  */
 :root {
-  --background: #fff0c5;
-  --card: #fff9e3;
-  --foreground: #17383a;
-  --muted: #4a6b6c;
-  --line: #e6d5a3;
-  --accent: #1f7173;
-  --accent-foreground: #ffffff;
-  --brand: #359fa0;
-  --soft: #8ad6d1;
-  --soft-foreground: #17383a;
-  --highlight: #ff8c52;
-  --highlight-foreground: #17383a;
-  --danger: #9a2b1c;
-  --danger-foreground: #ffffff;
-  --danger-bg: #fde9e2;
-  --danger-line: #f2b8a5;
-  /* Native date pickers and scrollbars follow the active scheme. */
+  color-scheme: light dark;
+
+  --background: light-dark(#f3f3f3, #1c1c1c);
+  --card: light-dark(#ffffff, #0a0a0a);
+  --foreground: light-dark(#0a0a0a, #f5f5f5);
+  --muted: light-dark(#6b6b6b, #a0a0a0);
+  --line: light-dark(#e2e2e2, #2e2e2e);
+  --accent: light-dark(#0a0a0a, #f5f5f5);
+  --accent-foreground: light-dark(#ffffff, #0a0a0a);
+  --brand: var(--accent);
+  --soft: light-dark(#ececec, #262626);
+  --soft-foreground: var(--foreground);
+  --highlight: var(--accent);
+  --highlight-foreground: var(--accent-foreground);
+  --danger: light-dark(#b3261e, #ff8a80);
+  --danger-foreground: light-dark(#ffffff, #0a0a0a);
+  --danger-bg: light-dark(#fdecea, #2a1513);
+  --danger-line: light-dark(#f3b9b4, #6e3a35);
+}
+
+:root[data-theme="light"] {
   color-scheme: light;
 }
 
-/*
- * Dark tokens apply when the viewer picked dark in the theme menu
- * (data-theme="dark" on <html>, see app/layout.jsx), or follows the system
- * and the system is dark. Keep the two blocks identical.
- */
 :root[data-theme="dark"] {
-  --background: #0f2627;
-  --card: #163535;
-  --foreground: #fff0c5;
-  --muted: #9fbfbd;
-  --line: #2a4f4f;
-  --accent: #8ad6d1;
-  --accent-foreground: #0f2627;
-  --soft: #1f4f4f;
-  --soft-foreground: #8ad6d1;
-  --highlight-foreground: #0f2627;
-  --danger: #ffb4a2;
-  --danger-foreground: #0f2627;
-  --danger-bg: #3a1e1a;
-  --danger-line: #7a3a2e;
   color-scheme: dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --background: #0f2627;
-    --card: #163535;
-    --foreground: #fff0c5;
-    --muted: #9fbfbd;
-    --line: #2a4f4f;
-    --accent: #8ad6d1;
-    --accent-foreground: #0f2627;
-    --soft: #1f4f4f;
-    --soft-foreground: #8ad6d1;
-    --highlight-foreground: #0f2627;
-    --danger: #ffb4a2;
-    --danger-foreground: #0f2627;
-    --danger-bg: #3a1e1a;
-    --danger-line: #7a3a2e;
-    color-scheme: dark;
-  }
 }
 
 @theme inline {
@@ -232,4 +205,10 @@ h2 {
 .boot-splash.is-leaving {
   pointer-events: none;
   animation: boot-splash-hide 300ms ease-out forwards;
+}
+
+/* The logo is shown in grayscale to match the monochrome theme. */
+.brand-light,
+.brand-dark {
+  filter: grayscale(1);
 }
