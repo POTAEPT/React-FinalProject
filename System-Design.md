@@ -207,6 +207,8 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 - `lib/auth/actions.js` **ไม่ใช่ Server Action** (ไม่มี `"use server"`) เพราะใช้ browser client
 - สมัคร: `signUp({ displayName, email, password })` ส่ง `options.data.display_name` ให้ trigger `handle_new_user` สร้างแถวใน `profiles`
 - ไม่มี route API สำหรับล็อกอิน การทดสอบอัตโนมัติจึงต้องล็อกอินผ่าน Supabase Auth แล้วนำ cookie มาใช้ (ดูหัวข้อ 17)
+- คนที่ล็อกอินอยู่แล้วเปิด `/login` หรือ `/register` จะถูก redirect ไป `?next=` หรือ `/` (`lib/auth/redirect-signed-in.js` เรียกในตัว page ไม่ได้ทำใน middleware)
+- ทุกที่ที่ redirect ตาม `?next=` ต้องผ่าน `safeNextPath()` (`lib/auth/next-path.js`) ซึ่งรับเฉพาะ path ในเว็บ (`/…` แต่ไม่ใช่ `//…`) กัน open redirect
 
 ### Session ฝั่ง server
 | ต้องการ | ใช้ | เหตุผล |
@@ -579,7 +581,9 @@ export async function doSomething(partyId, input) {
 - ปุ่มอันตราย (ยกเลิกตี้) = `bg-danger text-danger-foreground` · badge สถานะใน `/my-party`: ยกเลิก = `danger*`, รออนุมัติ = `highlight`, ออกแล้ว = `border-line text-muted`
 - ห้ามใช้ส้มเป็นสีตัวอักษรบนพื้น cream (contrast ต่ำ) ใช้เป็นพื้นของ badge/ปุ่มเท่านั้น
 
-- รองรับ dark mode ผ่าน `prefers-color-scheme` **ใช้ token เสมอ** และไม่ hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` (หน้า account/login เดิมยังใช้ zinc อยู่ ดู Known issues)
+- **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):** ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`) `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ) ส่วน `globals.css` ใช้ token มืดเมื่อ `[data-theme="dark"]` หรือเมื่อระบบเป็นมืดและไม่ได้บังคับ light ผลคือไม่กะพริบตอนโหลด ปุ่มเลือกอยู่ในเมนูบัญชี (หรือปุ่มธีมของ guest) ใน `site-header.jsx`
+- **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าแก้ token มืด ต้องแก้ทั้ง 2 block ใน `globals.css` ให้เหมือนกัน
+- **Navbar:** จอ ≥ `sm` แสดงเมนูหลักบนแถบบน ส่วนมือถือย้ายไปแถบล่าง (`body` มี `pb-20 sm:pb-0` กันเนื้อหาโดนบัง) ด้านขวาเป็นเมนูบัญชี (รูป + ชื่อ → โปรไฟล์ / ธีม / ออกจากระบบ) หรือปุ่มเข้าสู่ระบบ / สมัครสมาชิกสำหรับ guest
 - รูปทรง: การ์ด `rounded-2xl border border-line bg-card p-5`, ปุ่ม `rounded-xl px-4 py-2.5 text-sm font-medium`, chip `rounded-full`
 - layout: `<main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">` (feed ใช้ `max-w-5xl`)
 
@@ -704,7 +708,7 @@ npm run dev          # http://localhost:3000
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม Lagoon Sunset (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
-5. `app/layout.jsx` มี `console.log('Rendering RootLayout')` ทุก request ควรลบออก
+5. ~~`app/layout.jsx` มี `console.log` ทุก request~~ ลบแล้ว 2026-10-09 แต่ตอนนี้ layout เรียก `getUser()` + profile สำหรับ header ทำให้ 1 request ล็อกอินเรียก Supabase Auth 3 ครั้ง (middleware, layout, page) ดู `Claude-QA.md` ข้อ U-1 สำหรับแนวทางลด
 6. หน้า `/party/[id]` มีลิงก์ "ตี้อื่นในหมวด" ไป `/?category=` ซึ่งยังใช้ได้ แต่ถ้า `/categories` กลับมา (branch 22) ควรทบทวน
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)
