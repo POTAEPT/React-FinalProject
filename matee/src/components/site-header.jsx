@@ -132,6 +132,11 @@ function MenuPanel({ account, theme, onTheme, close, onSignOut, signingOut }) {
           <Link href="/account/edit" onClick={close} className={menuRow}>
             ตั้งค่าโปรไฟล์
           </Link>
+          {account.isAdmin ? (
+            <Link href="/admin" onClick={close} className={menuRow}>
+              ผู้ดูแลระบบ
+            </Link>
+          ) : null}
           <div className="mx-2 my-1 border-t border-line" />
           <button
             type="button"
@@ -293,7 +298,7 @@ function GuestSidebar() {
   );
 }
 
-// account: { displayName, avatarUrl } for a signed-in user, or null.
+// account: { id, displayName, avatarUrl, isAdmin } for a signed-in user, or null.
 // theme: the saved preference ("system" | "light" | "dark") from the cookie.
 export function SiteHeader({ account, theme: savedTheme }) {
   const pathname = usePathname();
