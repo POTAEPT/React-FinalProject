@@ -355,7 +355,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
                       aria-current={active ? "page" : undefined}
                       className={`press flex items-center gap-3 rounded-2xl px-3 py-3 text-base max-[72rem]:justify-center max-[72rem]:px-0 ${
                         active
-                          ? "bg-background font-semibold text-foreground"
+                          ? "bg-brand-soft font-semibold text-foreground"
                           : "text-foreground hover:bg-background"
                       }`}
                     >

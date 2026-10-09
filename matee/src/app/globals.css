@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 /*
- * Monochrome theme: black, white and grays only. The one exception is the
- * danger set (errors, log out, cancelled), kept red so a warning still reads
- * as a warning.
+ * Monochrome theme: black, white and grays for surfaces, text and buttons,
+ * with a few accents from the logo so it does not feel like a mourning page:
+ * brand (teal/mint) for the seat bar and selected chips/menu rows, highlight
+ * (orange) for "waiting" states, and danger (red) for errors and cancels.
  *
  * Each token is written once as light-dark(light, dark). Which side applies
  * comes from color-scheme: "light dark" follows the system, and the theme menu
@@ -23,11 +24,14 @@
   --line: light-dark(#e2e2e2, #2e2e2e);
   --accent: light-dark(#0a0a0a, #f5f5f5);
   --accent-foreground: light-dark(#ffffff, #0a0a0a);
-  --brand: var(--accent);
+  /* Logo accents. brand is a fill or line, never text: deep teal on white
+     keeps the seat bar 4:1 against its track; mint on black. */
+  --brand: light-dark(#1f7173, #8ad6d1);
+  --brand-soft: light-dark(#e3f4f3, #173434);
   --soft: light-dark(#ececec, #262626);
   --soft-foreground: var(--foreground);
-  --highlight: var(--accent);
-  --highlight-foreground: var(--accent-foreground);
+  --highlight: #ff8c52;
+  --highlight-foreground: #0a0a0a;
   --danger: light-dark(#b3261e, #ff8a80);
   --danger-foreground: light-dark(#ffffff, #0a0a0a);
   --danger-bg: light-dark(#fdecea, #2a1513);
@@ -51,6 +55,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --color-soft: var(--soft);
   --color-soft-foreground: var(--soft-foreground);
   --color-highlight: var(--highlight);
@@ -205,10 +210,4 @@ h2 {
 .boot-splash.is-leaving {
   pointer-events: none;
   animation: boot-splash-hide 300ms ease-out forwards;
-}
-
-/* The logo is shown in grayscale to match the monochrome theme. */
-.brand-light,
-.brand-dark {
-  filter: grayscale(1);
 }

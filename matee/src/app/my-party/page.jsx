@@ -32,7 +32,7 @@ function GearIcon() {
 
 const badgeTone = {
   danger: "border border-danger-line bg-danger-bg text-danger",
-  highlight: "border border-foreground text-foreground",
+  highlight: "bg-highlight text-highlight-foreground",
   muted: "border border-line text-muted",
 };
 
