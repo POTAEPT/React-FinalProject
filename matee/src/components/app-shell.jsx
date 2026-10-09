@@ -14,7 +14,7 @@ const BARE_PATHS = ["/login", "/register"];
 // Pages whose title sits above the card on desktop.
 const TITLES = { "/": "หาตี้", "/account": "โปรไฟล์" };
 
-export function AppShell({ account, theme, children }) {
+export function AppShell({ account, children }) {
   const pathname = usePathname();
 
   if (BARE_PATHS.includes(pathname)) {
@@ -25,7 +25,7 @@ export function AppShell({ account, theme, children }) {
   // window. Side padding keeps the column clear of the rail on narrow windows.
   return (
     <div className="flex w-full flex-1 flex-col md:px-[4.5rem] min-[72rem]:px-0">
-      <SiteHeader account={account} theme={theme} />
+      <SiteHeader account={account} />
       <div className="mx-auto flex w-full min-w-0 flex-1 flex-col md:max-w-2xl">
         {/* Threads puts the page title above the card, on the page itself. */}
         {pathname === "/search" ? (

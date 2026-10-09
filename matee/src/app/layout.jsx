@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { BootSplash } from "@/components/boot-splash";
+import { ThemeProvider } from "@/components/theme-provider";
 import { loadAccount } from "@/lib/auth/account";
 import { readTheme, THEME_COOKIE } from "@/lib/theme";
 
@@ -35,10 +36,10 @@ export default async function RootLayout({ children, modal }) {
         <noscript>
           <style>{"#boot-splash{display:none}"}</style>
         </noscript>
-        <AppShell account={account} theme={theme}>
-          {children}
-        </AppShell>
-        {modal}
+        <ThemeProvider initialTheme={theme}>
+          <AppShell account={account}>{children}</AppShell>
+          {modal}
+        </ThemeProvider>
       </body>
     </html>
   );

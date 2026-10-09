@@ -139,6 +139,7 @@ React-FinalProject/
         ├── components/
         │   ├── app-shell.jsx      กรอบทุกหน้า: sidebar/แถบมือถือ, คอลัมน์กลาง, ปุ่ม + ลอย, กล่อง guest
         │   ├── site-header.jsx    sidebar (desktop), แถบบน + แถบล่าง (มือถือ), เมนูธีม/บัญชี
+        │   ├── theme-provider.jsx ThemeProvider + useTheme() (Context เก็บธีม)
         │   ├── boot-splash.jsx    โลโก้หมุนตอนโหลดหน้าครั้งแรก
         │   ├── brand-logo.jsx     โลโก้ light/dark ตามธีม
         │   ├── party-composer.jsx แถว "ตั้งตี้ใหม่…" บน feed (ลิงก์ไป /create)
@@ -584,6 +585,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
   - ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`)
   - `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ)
   - `globals.css` ตั้ง `color-scheme: light dark` เป็นค่าเริ่มต้น และ `[data-theme="light"]` / `[data-theme="dark"]` บังคับ `color-scheme` ข้างเดียว ทำให้ `light-dark()` ทุกตัวเลือกค่าถูก และไม่กะพริบตอนโหลด
+  - **Global state ฝั่ง client:** `ThemeProvider` (`components/theme-provider.jsx`, React Context) ห่อทั้งแอปใน `layout.jsx` รับค่าเริ่มจาก cookie ทุก client component อ่าน/เปลี่ยนธีมด้วย `useTheme()` → `{ theme, setTheme }` (`setTheme` ตั้ง `data-theme` + cookie) ห้ามส่งธีมเป็น prop ต่อกันอีก
   - ปุ่มเลือกธีมอยู่ในเมนู "≡" (หัวข้อถัดไป)
 - **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าเพิ่ม token ใหม่ ให้เขียนเป็น `light-dark()` ใน `:root` แล้วผูกใน `@theme inline` ส่วนโลโก้ยังใช้ class `.brand-light` / `.brand-dark` ที่มีกฎทั้งแบบ `data-theme` และแบบ media query
 - `@media (prefers-contrast: more)` เปลี่ยน `--line` เป็นสี `muted` ให้เส้นขอบชัดขึ้น
