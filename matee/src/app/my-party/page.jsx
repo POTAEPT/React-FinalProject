@@ -60,12 +60,16 @@ function PartyRow({ item, pendingCount }) {
         </span>
       </Link>
       <span className="flex shrink-0 items-center gap-2">
-        <Link
-          href={`/party/${item.partyId}#chat`}
-          className="rounded-full border border-line px-3 py-1 text-sm"
-        >
-          แชท
-        </Link>
+        {/* After leaving, the chat is closed to this user, so the link would
+            only lead to "คุณออกจากตี้แล้ว". A cancelled party keeps its chat. */}
+        {item.status === "cancelled" ? null : (
+          <Link
+            href={`/party/${item.partyId}#chat`}
+            className="rounded-full border border-line px-3 py-1 text-sm"
+          >
+            แชท
+          </Link>
+        )}
         {item.isHost ? (
           <Link
             href={`/manage/${item.partyId}`}
