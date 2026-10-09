@@ -87,12 +87,12 @@ export default async function PartyPage({ params }) {
       </Link>
       <article className="grid gap-6 rounded-2xl border border-line bg-card p-5 sm:p-6">
         {party.status === "cancelled" ? (
-          <p role="status" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
             เจ้าของตี้ยกเลิกตี้นี้แล้ว
           </p>
         ) : null}
         <div className="grid gap-2">
-          <p className="text-sm font-medium text-accent">
+          <p className="w-fit rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-soft-foreground">
             {categoryLabel(party.category, party.customCategory)}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">{party.title}</h1>

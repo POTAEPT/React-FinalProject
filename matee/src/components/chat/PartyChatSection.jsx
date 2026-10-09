@@ -54,7 +54,7 @@ export async function PartyChatSection({ party, viewer }) {
       body = (
         <>
           {ok ? null : (
-            <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            <p role="alert" className="text-sm text-danger">
               โหลดข้อความเก่าไม่สำเร็จ ข้อความใหม่จะยังแสดงตามปกติ
             </p>
           )}

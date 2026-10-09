@@ -15,7 +15,7 @@ export function PartyCard({ party, conflict = null }) {
         className="flex flex-1 flex-col gap-3 p-4"
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-sm font-medium text-accent">
+          <p className="rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-soft-foreground">
             {categoryLabel(party.category, party.customCategory)}
           </p>
           <p className="shrink-0 text-sm text-muted">
@@ -36,7 +36,9 @@ export function PartyCard({ party, conflict = null }) {
             {party.ended ? " · จบแล้ว" : ""}
           </p>
           {party.pendingCount != null && party.pendingCount > 0 ? (
-            <p className="text-muted">รอการยืนยัน {party.pendingCount}</p>
+            <p className="rounded-full bg-highlight px-2 py-0.5 text-xs font-medium text-highlight-foreground">
+              รอการยืนยัน {party.pendingCount}
+            </p>
           ) : null}
         </div>
         <p className="text-sm text-muted">โดย {party.hostName}</p>

@@ -34,7 +34,7 @@ function MemberRow({ member, children }) {
             className="size-8 rounded-full object-cover"
           />
         ) : (
-          <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-line text-sm">
+          <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-soft text-sm text-soft-foreground">
             {member.displayName.slice(0, 1)}
           </span>
         )}
@@ -78,7 +78,7 @@ export default async function ManagePartyPage({ params }) {
           {joinModeLabel(party.joinMode)} · {party.confirmedCount}/{party.maxMembers} ที่นั่ง
         </p>
         {cancelled ? (
-          <p role="status" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+          <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
             ตี้นี้ถูกยกเลิกแล้ว
           </p>
         ) : null}

@@ -32,18 +32,19 @@ export function groupMyParties(memberships, now = Date.now()) {
   return { upcoming: groupByDate(upcoming), past: groupByDate(past) };
 }
 
-// The label next to a row, or null for an active member of an open party.
+// The badge next to a row, or null for an active member of an open party.
+// tone picks the theme colour: danger, highlight (waiting) or muted.
 export function myPartyBadge(item) {
   if (item.partyStatus === "cancelled") {
-    return "ตี้ถูกยกเลิก";
+    return { label: "ตี้ถูกยกเลิก", tone: "danger" };
   }
 
   if (item.status === "cancelled") {
-    return "ออกจากตี้แล้ว";
+    return { label: "ออกจากตี้แล้ว", tone: "muted" };
   }
 
   if (item.status === "pending") {
-    return "รออนุมัติ";
+    return { label: "รออนุมัติ", tone: "highlight" };
   }
 
   return null;

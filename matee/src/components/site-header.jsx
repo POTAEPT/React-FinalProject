@@ -13,11 +13,14 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-line bg-card/90">
+    <header className="border-t-4 border-b border-t-brand border-b-line bg-card">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="leading-tight">
-          <span className="block text-lg font-semibold">MaTee</span>
-          <span className="block text-xs text-muted">มาตี้กัน</span>
+        <Link href="/" className="flex items-center gap-2 leading-tight">
+          <span aria-hidden="true" className="size-7 rounded-full bg-brand" />
+          <span>
+            <span className="block text-lg font-semibold">MaTee</span>
+            <span className="block text-xs text-muted">มาตี้กัน</span>
+          </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {links.map((link) => {

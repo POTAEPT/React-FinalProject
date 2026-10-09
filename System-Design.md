@@ -491,7 +491,7 @@ export async function doSomething(partyId, input) {
 | บทบาท | สีดิบจาก Color Hunt | ใช้ที่ไหน |
 |---|---|---|
 | Mint | `#8AD6D1` | chip, พื้น badge, accent ใน dark mode |
-| Teal | `#359FA0` | แถบ header, focus ring, ไอคอน, ลวดลายตกแต่ง (ไม่ใช้เป็นสีตัวอักษร) |
+| Teal | `#359FA0` | แถบสีบนสุดของ header และการ์ด auth, โลโก้, ไอคอน, ลวดลายตกแต่ง (ไม่ใช้เป็นสีตัวอักษรหรือ focus ring) |
 | Cream | `#FFF0C5` | พื้นหลังหน้า (light), ตัวอักษรหลัก (dark) |
 | Orange | `#FF8C52` | ปุ่ม CTA รอง, badge pending, จุดเน้น (ตัวอักษรบนส้มต้องใช้ Ink) |
 
@@ -504,10 +504,11 @@ export async function doSomething(partyId, input) {
 | `muted` | `#4A6B6C` | `#9FBFBD` | ตัวอักษรรอง |
 | `line` | `#E6D5A3` | `#2A4F4F` | เส้นขอบ |
 | `accent` + `accent-foreground` | `#1F7173` + `#FFFFFF` | `#8AD6D1` + `#0F2627` | ปุ่มหลัก, ลิงก์เด่น |
-| `brand` | `#359FA0` | `#359FA0` | header, focus ring, ไอคอน (ห้ามใช้เป็นสีตัวอักษร) |
+| `brand` | `#359FA0` | `#359FA0` | แถบ header (`border-t-brand`), โลโก้, ไอคอน (ห้ามใช้เป็นสีตัวอักษร) |
 | `soft` + `soft-foreground` | `#8AD6D1` + `#17383A` | `#1F4F4F` + `#8AD6D1` | chip, หมวดหมู่, badge ทั่วไป |
 | `highlight` + `highlight-foreground` | `#FF8C52` + `#17383A` | `#FF8C52` + `#0F2627` | CTA รอง, badge pending, จุดเน้น |
 | `danger` / `danger-bg` / `danger-line` | `#9A2B1C` / `#FDE9E2` / `#F2B8A5` | `#FFB4A2` / `#3A1E1A` / `#7A3A2E` | error / แบนเนอร์ยกเลิก |
+| `danger-foreground` | `#FFFFFF` | `#0F2627` | ตัวอักษรบนปุ่ม `bg-danger` (เช่น ยกเลิกตี้) contrast 7.67 / 9.27 |
 
 ค่า contrast ที่คำนวณแล้ว (เกณฑ์ WCAG AA: ตัวอักษรปกติ ≥ 4.5, ข้อความใหญ่/ไอคอน ≥ 3)
 
@@ -534,6 +535,7 @@ export async function doSomething(partyId, input) {
   --soft: #8ad6d1;        --soft-foreground: #17383a;
   --highlight: #ff8c52;   --highlight-foreground: #17383a;
   --danger: #9a2b1c;      --danger-bg: #fde9e2;  --danger-line: #f2b8a5;
+  --danger-foreground: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -543,6 +545,7 @@ export async function doSomething(partyId, input) {
     --soft: #1f4f4f;       --soft-foreground: #8ad6d1;
     --highlight-foreground: #0f2627;
     --danger: #ffb4a2;     --danger-bg: #3a1e1a; --danger-line: #7a3a2e;
+    --danger-foreground: #0f2627;
   }
 }
 @theme inline {
@@ -553,6 +556,7 @@ export async function doSomething(partyId, input) {
   --color-soft: var(--soft);              --color-soft-foreground: var(--soft-foreground);
   --color-highlight: var(--highlight);    --color-highlight-foreground: var(--highlight-foreground);
   --color-danger: var(--danger);          --color-danger-bg: var(--danger-bg);
+  --color-danger-foreground: var(--danger-foreground);
   --color-danger-line: var(--danger-line);
 }
 ```
@@ -561,6 +565,9 @@ export async function doSomething(partyId, input) {
 - ปุ่มหลัก = `bg-accent text-accent-foreground` · ปุ่ม CTA รอง/สถานะรอ = `bg-highlight text-highlight-foreground` · chip = `bg-soft text-soft-foreground`
 - error/แบนเนอร์ยกเลิกใช้ token `danger*` แทน `text-red-700 dark:text-red-300` เดิม
 - `brand` (`#359FA0`) ใช้กับพื้นผิวและไอคอนเท่านั้น เพราะเป็นตัวอักษรบน cream ได้แค่ 2.8:1 หากต้องการลิงก์สีเขียวน้ำทะเลให้ใช้ `accent`
+- **focus ring ใช้ `accent`** (`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`) เพราะ `brand` บน cream ได้ 2.8:1 ต่ำกว่าเกณฑ์ 3:1 ของ outline ส่วน accent ได้ 5.05 (light) / 9.51 (dark)
+- ห้ามวางตัวอักษรบนพื้น `brand` (Ink บน brand ได้ 3.98, ขาวได้ 3.17 ต่ำกว่า 4.5) header จึงเป็นพื้น `card` ที่มีแถบ brand ด้านบน
+- ปุ่มอันตราย (ยกเลิกตี้) = `bg-danger text-danger-foreground` · badge สถานะใน `/my-party`: ยกเลิก = `danger*`, รออนุมัติ = `highlight`, ออกแล้ว = `border-line text-muted`
 - ห้ามใช้ส้มเป็นสีตัวอักษรบนพื้น cream (contrast ต่ำ) ใช้เป็นพื้นของ badge/ปุ่มเท่านั้น
 
 - รองรับ dark mode ผ่าน `prefers-color-scheme` **ใช้ token เสมอ** และไม่ hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` (หน้า account/login เดิมยังใช้ zinc อยู่ ดู Known issues)
@@ -685,7 +692,7 @@ npm run dev          # http://localhost:3000
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
-4. **สีของหน้า auth/account** ใช้ `zinc`/`white` ตรงๆ จึงไม่รองรับ dark mode และจะไม่ได้ธีม Lagoon Sunset ควรเปลี่ยนเป็น token ใหม่ในหัวข้อ 14 (รวมถึง `text-red-*` ทุกจุดที่ยังเหลือ ให้เป็น `danger*`)
+4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม Lagoon Sunset (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. `app/layout.jsx` มี `console.log('Rendering RootLayout')` ทุก request ควรลบออก
 6. หน้า `/party/[id]` มีลิงก์ "ตี้อื่นในหมวด" ไป `/?category=` ซึ่งยังใช้ได้ แต่ถ้า `/categories` กลับมา (branch 22) ควรทบทวน
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation

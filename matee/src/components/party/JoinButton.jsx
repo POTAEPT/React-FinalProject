@@ -84,7 +84,9 @@ export function JoinButton({ partyId, state }) {
     case "pending":
       control = (
         <div className="grid gap-2">
-          <p className={disabledClass}>รอเจ้าของตี้อนุมัติ</p>
+          <p className="rounded-xl bg-highlight px-4 py-2.5 text-center text-sm font-medium text-highlight-foreground">
+            รอเจ้าของตี้อนุมัติ
+          </p>
           <button
             type="button"
             disabled={isPending}
@@ -150,7 +152,7 @@ export function JoinButton({ partyId, state }) {
     <div className="grid gap-2">
       {control}
       {result ? (
-        <div role="alert" className="grid gap-1 text-sm text-red-700 dark:text-red-300">
+        <div role="alert" className="grid gap-1 text-sm text-danger">
           <p>{result.message}</p>
           {result.code === "time_conflict" && result.conflictingPartyId ? (
             <Link

@@ -57,7 +57,7 @@ function Avatar({ name, url }) {
   return (
     <span
       aria-hidden="true"
-      className="grid size-8 shrink-0 place-items-center rounded-full bg-line text-sm"
+      className="grid size-8 shrink-0 place-items-center rounded-full bg-soft text-sm text-soft-foreground"
     >
       {(name ?? "?").slice(0, 1)}
     </span>
@@ -228,7 +228,7 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
   return (
     <div className="grid gap-3">
       {notice ? (
-        <p role="status" className="rounded-xl border border-line bg-background px-3 py-2 text-sm text-muted">
+        <p role="status" className="rounded-xl bg-soft px-3 py-2 text-sm font-medium text-soft-foreground">
           {notice}
         </p>
       ) : null}
@@ -300,7 +300,7 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
           </button>
         </div>
         {error ? (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         ) : null}

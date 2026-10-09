@@ -30,6 +30,12 @@ function GearIcon() {
   );
 }
 
+const badgeTone = {
+  danger: "border border-danger-line bg-danger-bg text-danger",
+  highlight: "bg-highlight text-highlight-foreground",
+  muted: "border border-line text-muted",
+};
+
 function PartyRow({ item, pendingCount }) {
   const badge = myPartyBadge(item);
   const inactive = item.partyStatus === "cancelled" || item.status === "cancelled";
@@ -43,7 +49,9 @@ function PartyRow({ item, pendingCount }) {
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground">เจ้าของ</span>
           ) : null}
           {badge ? (
-            <span className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">{badge}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeTone[badge.tone]}`}>
+              {badge.label}
+            </span>
           ) : null}
         </span>
         <span className="text-sm text-muted">
@@ -70,7 +78,7 @@ function PartyRow({ item, pendingCount }) {
           >
             <GearIcon />
             {pendingCount > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 grid min-w-5 place-items-center rounded-full bg-red-700 px-1 text-xs font-medium text-white">
+              <span className="absolute -right-1.5 -top-1.5 grid min-w-5 place-items-center rounded-full bg-highlight px-1 text-xs font-medium text-highlight-foreground">
                 {pendingCount}
               </span>
             ) : null}

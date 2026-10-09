@@ -9,7 +9,7 @@ const primaryClass =
 const secondaryClass =
   "rounded-xl border border-line px-3 py-1.5 text-sm font-medium disabled:opacity-60";
 const dangerClass =
-  "rounded-xl bg-red-700 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60 dark:bg-red-600";
+  "rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-danger-foreground disabled:opacity-60";
 
 function ErrorText({ message }) {
   if (!message) {
@@ -17,7 +17,7 @@ function ErrorText({ message }) {
   }
 
   return (
-    <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+    <p role="alert" className="text-sm text-danger">
       {message}
     </p>
   );

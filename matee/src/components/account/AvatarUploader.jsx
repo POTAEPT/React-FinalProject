@@ -31,21 +31,21 @@ export default function AvatarUploader({ userId, currentAvatarUrl }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="relative w-24 h-24 overflow-hidden bg-zinc-100 border-2 border-zinc-200 rounded-full">
+      <div className="relative size-24 overflow-hidden rounded-full border-2 border-brand bg-soft">
         {previewUrl ? (
           <Image src={previewUrl} alt="Avatar" fill className="object-cover" />
         ) : (
-          <div className="flex items-center justify-center w-full h-full text-3xl text-zinc-400">👤</div>
+          <div className="flex size-full items-center justify-center text-3xl text-soft-foreground">👤</div>
         )}
         {loading && <div className="absolute inset-0 flex items-center justify-center bg-black/40"><span className="w-6 h-6 border-2 border-white rounded-full border-t-transparent animate-spin" /></div>}
       </div>
 
-      <label className="text-sm font-medium transition cursor-pointer text-zinc-600 hover:text-zinc-900">
+      <label className="cursor-pointer rounded-xl border border-line px-3 py-1.5 text-sm font-medium text-accent transition hover:bg-background focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
         {loading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูปโปรไฟล์'}
-        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} disabled={loading} className="hidden" />
+        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} disabled={loading} className="sr-only" />
       </label>
-      <p className="text-xs text-zinc-400">JPEG, PNG, WEBP · สูงสุด 2MB</p>
-      {error && <p className="px-2 py-1 text-xs text-red-600 border border-red-100 rounded bg-red-50">{error}</p>}
+      <p className="text-xs text-muted">JPEG, PNG, WEBP · สูงสุด 2MB</p>
+      {error && <p role="alert" className="rounded-lg border border-danger-line bg-danger-bg px-2 py-1 text-xs text-danger">{error}</p>}
     </div>
   )
 }

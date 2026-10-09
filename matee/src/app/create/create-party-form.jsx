@@ -11,7 +11,7 @@ import { createPartySchema, zodResolver } from "@/lib/parties/schema";
 import { DURATION_MINUTES, formatDuration } from "@/lib/parties/time";
 
 const fieldClass =
-  "w-full rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-invalid:border-red-700";
+  "w-full rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-invalid:border-danger";
 
 function FieldError({ message, id }) {
   if (!message) {
@@ -19,7 +19,7 @@ function FieldError({ message, id }) {
   }
 
   return (
-    <p id={id} className="text-sm text-red-700 dark:text-red-300">
+    <p id={id} className="text-sm text-danger">
       {message}
     </p>
   );
@@ -275,7 +275,7 @@ export function CreatePartyForm({ defaultDate, minDate }) {
       </fieldset>
 
       {formError ? (
-        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+        <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
           {formError}
         </p>
       ) : null}
