@@ -590,7 +590,7 @@ export async function doSomething(partyId, input) {
 
 ### สไตล์โค้ด
 - ภาษา **JavaScript**, ES modules, import ด้วย `@/` เสมอ (ไม่ใช้ `../../`)
-- **นามสกุลไฟล์:** component และ page ใช้ `.jsx`, ไฟล์ logic, query และ action ใช้ `.js` (ไฟล์เก่าบางไฟล์ใน `components/party/*.js` และ `app/manage`, `app/my-party` ยังเป็น `.js` เปลี่ยนชื่อได้เมื่อแก้ครั้งถัดไป)
+- **นามสกุลไฟล์:** component และ page ใช้ `.jsx`, ไฟล์ logic, query และ action ใช้ `.js`
 - **ชื่อ:** component เป็น `PascalCase` และ export แบบ named (`export function PartyCard`) · ฟังก์ชันเป็น `camelCase` · ไฟล์ใน `lib/` เป็น `kebab-case.js`
 - comment อธิบาย**ทำไม** ไม่ใช่ทำอะไร เขียนภาษาอังกฤษหรือไทยก็ได้ แต่ให้สอดคล้องกันในแต่ละไฟล์
 - ห้ามเพิ่ม dependency ใหม่โดยไม่ตกลงกับทีมก่อน
