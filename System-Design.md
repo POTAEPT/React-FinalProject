@@ -92,7 +92,7 @@ MaTee คือเว็บหาตี้ทำกิจกรรมสำห�
 └──────────────┬──────────────────────────────────────────┼──────────┘
                │ HTTP: หน้าเว็บ + Server Actions (POST)     │
 ┌──────────────▼────────── Next.js (Vercel) ──────────────┼──────────┐
-│  middleware.js   refresh session, กัน route              │          │
+│  proxy.js        refresh session, กัน route              │          │
 │  Server Components (page.jsx)  อ่านข้อมูลด้วย session ผู้ใช้│          │
 │  Server Actions (lib/*/actions.js)  เขียนข้อมูล + revalidate │          │
 └──────────────┬──────────────────────────────────────────┼──────────┘
@@ -131,7 +131,7 @@ React-FinalProject/
     ├── next.config.mjs       reactCompiler, images.remotePatterns (Supabase storage)
     ├── public/brand/         โลโก้ MaTee (mark / lockup / tile) แบบ light และ dark
     └── src/
-        ├── middleware.js     ← จะเปลี่ยนเป็น proxy.js (ดู Known issues)
+        ├── proxy.js          (Next 16 ชื่อเดิม middleware.js)
         ├── app/              routes (หัวข้อ 6)
         │   ├── layout.jsx    html + ธีม + BootSplash + AppShell + slot `modal`
         │   ├── @modal/       parallel route ของ modal (ตั้งตี้, แก้ไขโปรไฟล์) ดูหัวข้อ 14
@@ -175,7 +175,7 @@ React-FinalProject/
 |---|---|---|
 | `lib/supabase/server.js` → `await createClient()` | Server Component, Server Action | อ่าน cookie จาก `next/headers` ส่วนการเขียน cookie ใน Server Component จะถูกเงียบไว้ |
 | `lib/supabase/client.js` → `createClient()` | Client Component | browser client (singleton) ใช้สำหรับ auth และ Realtime |
-| `lib/supabase/middleware.js` → `updateSession(request)` | `middleware.js` เท่านั้น | refresh token และส่ง cookie ใหม่กลับไปกับ response |
+| `lib/supabase/middleware.js` → `updateSession(request)` | `proxy.js` เท่านั้น | `getClaims()` ตรวจ token ในเครื่อง (ES256 + JWKS cache 10 นาที) refresh token ที่หมดอายุ และส่ง cookie ใหม่กลับไปกับ response คืน `{ userId, supabaseResponse }` |
 | `lib/supabase/env.js` | ทุกที่ | `getSupabaseEnv()` คืน `null` ถ้ายังไม่ตั้ง env (หน้าเว็บแสดงข้อความแนะนำแทน crash) |
 
 ---
@@ -203,7 +203,7 @@ React-FinalProject/
 
 **หน้าที่ไม่มีกรอบแอป:** `/login`, `/register` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
 
-**Route ที่ middleware บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` (รวม `/account/edit`) ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
+**Route ที่ proxy บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` (รวม `/account/edit`) ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
 
 **รูปแบบ id ใน URL:** ทุกหน้าที่รับ `[id]` ต้องเช็ค UUID ด้วย regex ก่อน query ถ้าไม่ผ่านให้เรียก `notFound()`
 ```js
@@ -225,7 +225,7 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 - หลังล็อกอินหรือสมัครสำเร็จ ให้ใช้ `window.location.replace(next)` (โหลดหน้าใหม่ทั้งหน้า) **ห้ามใช้ `router.push()` คู่กับ `router.refresh()`** เพราะ refresh จะดึง `/login` ซ้ำ ซึ่ง redirect คนที่ล็อกอินแล้ว และ navigation 2 ตัวจะแข่งกันจนวนได้
 - สมัคร: `signUp({ displayName, email, password })` ส่ง `options.data.display_name` ให้ trigger `handle_new_user` สร้างแถวใน `profiles`
 - ไม่มี route API สำหรับล็อกอิน การทดสอบอัตโนมัติจึงต้องล็อกอินผ่าน Supabase Auth แล้วนำ cookie มาใช้ (ดูหัวข้อ 17)
-- คนที่ล็อกอินอยู่แล้วเปิด `/login` หรือ `/register` จะถูก redirect ไป `?next=` หรือ `/` (`lib/auth/redirect-signed-in.js` เรียกในตัว page ไม่ได้ทำใน middleware)
+- คนที่ล็อกอินอยู่แล้วเปิด `/login` หรือ `/register` จะถูก redirect ไป `?next=` หรือ `/` (`lib/auth/redirect-signed-in.js` เรียกในตัว page ไม่ได้ทำใน proxy)
 - ทุกที่ที่ redirect ตาม `?next=` ต้องผ่าน `safeNextPath()` (`lib/auth/next-path.js`) ซึ่งรับเฉพาะ path ในเว็บ (`/…` แต่ไม่ใช่ `//…`) กัน open redirect
 
 ### Session ฝั่ง server
@@ -238,8 +238,8 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 | หน้า admin | `await requireAdmin()` จาก `lib/admin/require-admin.js` บรรทัดแรกของทุกหน้า (และใน layout) | ไม่ใช่ admin → `notFound()` ส่วน admin action เช็ค `loadAccount()?.isAdmin` เองแล้วคืน `fail("not_admin")` |
 | **ห้ามใช้** | `supabase.auth.getSession()` เพื่อตัดสินสิทธิ์ | อ่าน cookie ตรงๆ โดยไม่ตรวจ ปลอมได้ |
 
-### middleware.js (ทุก request ยกเว้นไฟล์ static)
-1. `updateSession()` refresh token ที่ใกล้หมดอายุ แล้วแนบ cookie ใหม่ไปกับ response
+### proxy.js (ทุก request ยกเว้นไฟล์ static)
+1. `updateSession()` ตรวจ token ด้วย `getClaims()` (ไม่เรียก Supabase Auth ผ่านเน็ต ยกเว้นตอน refresh หรือ JWKS หมด cache) refresh token ที่ใกล้หมดอายุ แล้วแนบ cookie ใหม่ไปกับ response · ไม่ query ตารางใดเลย
 2. ยังไม่ล็อกอินแต่เข้า protected path → redirect ไป `/login?next=...`
 3. ตอน redirect ต้องคัด cookie จาก `supabaseResponse` ไปด้วย (`redirectWithSession`) ไม่อย่างนั้น session ที่เพิ่ง refresh จะหาย
 
@@ -251,7 +251,7 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 
 | ชั้น | อยู่ที่ | หน้าที่ |
 |---|---|---|
-| 1. Route | `middleware.js` + ต้นไฟล์ `page` | กัน guest ออกจากหน้าที่ต้องล็อกอิน ถ้าไม่ใช่เจ้าของหรือไม่ใช่ admin ให้ `notFound()` (ไม่บอกว่ามีหน้านี้) |
+| 1. Route | `proxy.js` + ต้นไฟล์ `page` | กัน guest ออกจากหน้าที่ต้องล็อกอิน ถ้าไม่ใช่เจ้าของหรือไม่ใช่ admin ให้ `notFound()` (ไม่บอกว่ามีหน้านี้) |
 | 2. Server Action | ต้นทุก action | ตรวจ input → ตรวจ `getUser()` → ตรวจสิทธิ์ (host? member?) → ตรวจกติกา แล้วคืน `code` ที่ชัดเจน |
 | 3. Database | RLS + triggers | ด่านสุดท้าย ป้องกันกรณีเรียก action ตรงหรือกดพร้อมกัน **ห้ามคิดว่าชั้น 1–2 พอแล้ว** |
 
@@ -658,7 +658,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 - **อ่าน `matee/node_modules/next/dist/docs/` ก่อนใช้ API ที่ไม่แน่ใจ** (ตามที่ `matee/AGENTS.md` กำหนด)
 - `params` และ `searchParams` ของ page เป็น **Promise** ต้อง `const { id } = await params`
 - `cookies()` เป็น async: `const store = await cookies()`
-- `middleware.js` **deprecated** แล้ว ชื่อใหม่คือ `proxy.js` และ export ชื่อ `proxy` (branch 22 เปลี่ยนแล้ว)
+- `middleware.js` **deprecated** แล้ว ชื่อใหม่คือ `proxy.js` และ export ชื่อ `proxy` (เปลี่ยนแล้ว 2026-10-10) runtime เป็น Node.js เสมอ เลือก edge ไม่ได้
 - เปิด React Compiler อยู่ จึงไม่ต้องใช้ `useMemo`/`useCallback` และห้ามแก้ค่า `ref.current` ระหว่าง render
 
 ### สไตล์โค้ด
@@ -759,10 +759,10 @@ npm run dev          # http://localhost:3000
 
 ### Known issues / หนี้ทางเทคนิค
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
-2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ทำเป็นงานสุดท้ายของ #7 (พร้อมเปลี่ยนเป็น `getClaims()`) การเปลี่ยนชื่อจาก branch 22 ไม่ได้ย้ายมา
+2. ~~**`middleware.js` → `proxy.js`**~~ แก้แล้ว 2026-10-10: เปลี่ยนชื่อ + ใช้ `getClaims()` และไม่มีการเช็คแบนแล้ว หน้าที่ล็อกอิน (prod, median 10 ครั้ง) จาก 239–315ms เหลือ 191–261ms (ก่อนรอบนี้ 310–539ms)
 3. ~~**รูปแบบผลลัพธ์ของ action ไม่ตรงกัน**~~ แก้แล้ว 2026-10-09: ทุก action ใช้ `fail()` จาก `lib/action-result.js` รวม admin
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
-5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
+5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ส่วน proxy เปลี่ยนเป็น `getClaims()` แล้ว (Known issue 2) (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ~~ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)~~ แก้แล้ว: host มีปุ่ม "ลบ" 2 จังหวะในแชท (`DeleteMessageButton`) admin ลบได้ที่ `/admin/parties/[id]`

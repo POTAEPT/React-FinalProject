@@ -45,7 +45,7 @@
 | Server Action (`createParty`, `joinParty`, `leaveParty`, `skipParty`, `sendPartyMessage`, approve/reject, `cancelParty`, admin actions) | Server Action | โค้ดที่เขียน DB และเช็ค session/role ต้องไม่หลุดไป browser + `revalidatePath` |
 | /admin, /admin/parties, /admin/users, /admin/parties/[id] | Server | เรียก `requireAdmin()` แล้ว query ตรง ปุ่ม cancel/delete/ban เป็น Client Component เล็กๆ ที่เรียก admin Server Action |
 | layout + nav | Server | อ่าน session ฝั่ง server เพื่อโชว์ลิงก์ "ตี้ของฉัน" และลิงก์ Admin ตาม role ไม่มี interactive |
-| `middleware.ts` | Edge (ทุก request) | refresh JWT ที่หมดอายุ และ redirect guest ออกจากหน้าที่ต้อง login |
+| `proxy.js` | Proxy, Node.js (ทุก request) | ตรวจ JWT ด้วย `getClaims()` refresh ตัวที่หมดอายุ และ redirect guest ออกจากหน้าที่ต้อง login |
 
 ## 4. ข้อมูลมาจากไหน + จุดที่ต้องเขียนข้อมูลกลับ
 
@@ -71,7 +71,7 @@
 
 | คน | รับผิดชอบ |
 | -- | --------- |
-| คนที่ 1 | scaffold Next.js, Supabase client ฝั่ง server/browser, `middleware.ts`, ระบบ auth (register / login / JWT session / `getSession()`), อัปโหลดรูปโปรไฟล์ไป Storage, หน้า `/account` |
+| คนที่ 1 | scaffold Next.js, Supabase client ฝั่ง server/browser, `proxy.js`, ระบบ auth (register / login / JWT session / `getSession()`), อัปโหลดรูปโปรไฟล์ไป Storage, หน้า `/account` |
 | คนที่ 2 | ฟีดการ์ดที่ `/` พร้อมค้นหาและ filter, `/categories`, `/party/[id]`, ฟอร์ม `/create` (รวม join mode, ระยะเวลา, เช็คเวลาชน), แชทในตี้แบบ live, หน้า `/my-party` |
 | คนที่ 3 | `/manage/[id]` (approve / reject / ยกเลิกตี้), จำนวนคน live บนการ์ดผ่าน Realtime, หน้า admin ทั้งหมด (dashboard, จัดการตี้, จัดการผู้ใช้, ดูแลแชท), deploy ขึ้น Vercel |
 
@@ -83,7 +83,7 @@
 
 - Register → อยู่ที่ `/register` ใช้ Supabase Auth และ trigger `handle_new_user` สร้างแถวใน `profiles`
 - มีรูปผู้ใช้ → อยู่ที่ตอนสมัครและ `/account` อัปโหลดไป bucket `avatars` แล้วเก็บ URL ใน `profiles.avatar_url`
-- มีlogin → อยู่ที่ `/login` session เป็น JWT ของ Supabase ใน httpOnly cookie ผ่าน `@supabase/ssr` refresh ใน `middleware.ts` และดู claims ได้ที่ `/account`
+- มีlogin → อยู่ที่ `/login` session เป็น JWT ของ Supabase ใน httpOnly cookie ผ่าน `@supabase/ssr` refresh ใน `proxy.js` และดู claims ได้ที่ `/account`
 - หน้าapprove → อยู่ที่ `/manage/[id]` โฮสต์กด Approve/Reject คำขอ `pending` ของตี้โหมด Approve
 - Manage party 🎉 → อยู่ที่ `/my-party` (เฟืองพร้อม badge จำนวนคำขอ) เปิดไป `/manage/[id]` ดูสถานะ จำนวนคน และยกเลิกตี้ได้ ส่วน "จบแล้ว" คิดจากเวลาจบอัตโนมัติ
 - เก็บstage จำนวนคน,การยืนยันหรือยกเลิก → อยู่ที่ `party_members.status` (pending / confirmed / rejected / cancelled), `parties.status` (open / cancelled), `parties.confirmed_count` + view `party_counts` และ trigger กันตี้เต็มใน DB
