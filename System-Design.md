@@ -646,7 +646,7 @@ export async function doSomething(partyId, input) {
 ห้ามใส่ service role key ในแอปนี้
 
 ### ตั้งค่าใน Supabase
-1. รัน schema (`supabase/migrations/...sql`) ⚠️ ดู Known issue ข้อ 1 ก่อน
+1. รัน migration ทุกไฟล์ใน `supabase/migrations/` ตามลำดับชื่อไฟล์ (ไม่ใช่ `supabase/schema.sql` ดู Known issue ข้อ 1)
 2. เปิด Realtime ให้ `parties` และ `party_messages` (schema ทำให้แล้ว ตรวจใน Database > Publications)
 3. เปิด extension `pg_cron` เพื่อให้ job `purge-expired-chats` ทำงาน
 4. Auth: ตั้ง JWT Signing Keys เป็นแบบ asymmetric (ให้ `getSession()` ตรวจกับ JWKS ได้) และพิจารณาปิด email confirmation สำหรับ demo
@@ -682,7 +682,7 @@ npm run dev          # http://localhost:3000
 | #9 | deploy Vercel + smoke test | ⏳ |
 
 ### Known issues / หนี้ทางเทคนิค
-1. **SQL syntax ใน migration:** `on conflict (id) update` ต้องเป็น `on conflict (id) do update` (ส่วน bucket avatars) ถ้ารัน schema ใหม่จะ error และ `supabase/schema.sql` กับ migration ไม่ตรงกันตรงนี้ ควรเหลือไฟล์เดียว
+1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
 4. **สีของหน้า auth/account** ใช้ `zinc`/`white` ตรงๆ จึงไม่รองรับ dark mode และจะไม่ได้ธีม Lagoon Sunset ควรเปลี่ยนเป็น token ใหม่ในหัวข้อ 14 (รวมถึง `text-red-*` ทุกจุดที่ยังเหลือ ให้เป็น `danger*`)
