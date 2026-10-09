@@ -1,4 +1,5 @@
-import { CreatePartyForm } from "@/app/create/create-party-form";
+import { createParty } from "@/app/create/actions";
+import { PartyForm } from "@/components/party/PartyForm";
 import { addDays, bangkokToday } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -44,7 +45,26 @@ export default async function CreatePage() {
       </div>
       {user ? (
         <div className="rounded-2xl border border-line bg-card p-5">
-          <CreatePartyForm defaultDate={addDays(today, 1)} minDate={today} />
+          <PartyForm
+            action={createParty}
+            mode="create"
+            draftKey="matee:create-party-draft"
+            minDate={today}
+            defaultValues={{
+              title: "",
+              category: "sport",
+              customCategory: "",
+              eventDate: addDays(today, 1),
+              eventTime: "18:00",
+              durationMinutes: 120,
+              location: "",
+              maxMembers: 4,
+              detail: "",
+              joinMode: "approve",
+            }}
+            submitLabel="ตั้งตี้"
+            pendingLabel="กำลังตั้งตี้..."
+          />
         </div>
       ) : (
         <p className="rounded-2xl border border-dashed border-line bg-card px-4 py-8 text-center text-sm leading-6">
