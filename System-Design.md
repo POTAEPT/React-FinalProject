@@ -192,7 +192,7 @@ React-FinalProject/
 | `/party/[id]` | ทุกคน | Server + client ปุ่ม/แชท | รายละเอียด, ปุ่มตามสถานะ (`memberActionState`), แชท `#chat` (`chatAccess`) | ✅ |
 | `/create` | User | Modal บน feed | ฟอร์มตั้งตี้ (`PartyForm`) + เช็คเวลาชน เปิดเป็น modal ทับหน้าเดิมเมื่อกดจากในแอป และเปิดทับ feed เมื่อเข้า URL ตรง (ปิดแล้วไป `/`) | ✅ |
 | `/my-party` | User | Server | agenda จัดกลุ่มตามวัน, ส่วน "ที่ผ่านมา", ปุ่มแชท, เฟือง + badge pending | ✅ |
-| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม/ฟอร์ม | ยืนยัน/ปฏิเสธคำขอ (ปฏิเสธมี dialog), รายชื่อสมาชิก, รายการ "ปฏิเสธแล้ว" ให้เปลี่ยนใจยืนยันได้, แก้ไขรายละเอียดตี้ (ก่อนตี้เริ่ม), ยกเลิกตี้ (dialog) | ✅ |
+| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม/ฟอร์ม | ยืนยัน/ปฏิเสธคำขอ (ปฏิเสธมี dialog), รายชื่อสมาชิก, รายการ "ปฏิเสธแล้ว" ให้เปลี่ยนใจยืนยันได้, แก้ไขรายละเอียดตี้ (ก่อนตี้เริ่ม), ยกเลิกตี้ (dialog) · `<AutoRefresh>` refresh หน้าทุก 15 วินาทีตอนแท็บเปิดอยู่ (คำขอใหม่โผล่เอง เพราะ `party_members` ไม่อยู่ใน Realtime) ฟอร์มที่พิมพ์ค้างไม่หาย | ✅ |
 | `/login` | Guest | Client form | ล็อกอินแล้วกลับไปที่ `?next=` | ✅ |
 | `/register` | Guest | Client form | สมัคร (display name, email, password) | ✅ |
 | `/account` | User | Server | โปรไฟล์ (ชื่อ, อีเมล, role, avatar), จำนวนตี้ที่ตั้ง/เข้าร่วม, แท็บ `?tab=joined`, ปุ่มแก้ไขโปรไฟล์และออกจากระบบ | ✅ |
