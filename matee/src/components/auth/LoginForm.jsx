@@ -6,6 +6,7 @@ import { signIn } from '@/lib/auth/actions'
 import FormField from '@/components/ui/FormField'
 import Button from '@/components/ui/Button'
 import AlertMessage from '@/components/ui/AlertMessage'
+import { safeNextPath } from '@/lib/auth/next-path'
 
 /**
  * อธิบาย: Component สำหรับฟอร์มเข้าสู่ระบบ
@@ -14,7 +15,7 @@ import AlertMessage from '@/components/ui/AlertMessage'
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') || '/'
+  const nextPath = safeNextPath(searchParams.get('next'))
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
