@@ -282,7 +282,7 @@ function GuestSidebar() {
     <div className="grid gap-2">
       <Link
         href="/login"
-        className="rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
+        className="press rounded-xl bg-brand px-4 py-3 text-center text-sm font-semibold text-brand-foreground"
       >
         เข้าสู่ระบบ
       </Link>
@@ -355,7 +355,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
                       aria-current={active ? "page" : undefined}
                       className={`press flex items-center gap-3 rounded-2xl px-3 py-3 text-base max-[72rem]:justify-center max-[72rem]:px-0 ${
                         active
-                          ? "bg-background font-semibold text-foreground"
+                          ? "bg-brand-soft font-semibold text-foreground"
                           : "text-foreground hover:bg-background"
                       }`}
                     >
@@ -396,7 +396,11 @@ export function SiteHeader({ account, theme: savedTheme }) {
           showPhoneBar ? "grid" : "hidden"
         }`}
       >
-        <span />
+        {/* The sidebar's ≡ menu is hidden on phones; this keeps the theme (and,
+            when signed in, settings and log out) within reach. */}
+        <div className="justify-self-start">
+          <MenuButton account={account} {...menuProps} />
+        </div>
         <Link href="/" className="flex items-center gap-2 leading-tight">
           <BrandLogo variant="full" className="h-8 w-auto" priority />
         </Link>
@@ -411,7 +415,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
           {account ? null : (
             <Link
               href="/login"
-              className="press rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background"
+              className="press whitespace-nowrap rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-brand-foreground"
             >
               เข้าสู่ระบบ
             </Link>

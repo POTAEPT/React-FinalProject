@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import { fail } from '@/lib/action-result'
 import { createClient } from '@/lib/supabase/server'
 
 // Saves the signed-in user's display name. RLS lets a user update only their
@@ -10,14 +11,14 @@ export async function updateDisplayName(displayName) {
   const name = String(displayName ?? '').trim()
 
   if (name.length < 1 || name.length > 40) {
-    return { ok: false, error: 'ชื่อต้องยาว 1-40 ตัวอักษร' }
+    return fail('invalid', 'ชื่อต้องยาว 1-40 ตัวอักษร')
   }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return { ok: false, error: 'กรุณาเข้าสู่ระบบ' }
+    return fail('unauthenticated', 'กรุณาเข้าสู่ระบบ')
   }
 
   const { error } = await supabase
@@ -27,7 +28,7 @@ export async function updateDisplayName(displayName) {
 
   if (error) {
     console.error('update display name', error.message)
-    return { ok: false, error: 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง' }
+    return fail('unknown', 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง')
   }
 
   revalidatePath('/', 'layout')

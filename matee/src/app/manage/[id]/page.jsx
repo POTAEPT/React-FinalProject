@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AutoRefresh } from "@/components/auto-refresh";
 import {
   CancelPartyButton,
   DecisionButtons,
@@ -80,6 +81,7 @@ export default async function ManagePartyPage({ params }) {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
+      {cancelled ? null : <AutoRefresh seconds={15} />}
       <Link href={`/party/${party.id}`} className="text-sm text-muted">
         กลับไปหน้าตี้
       </Link>

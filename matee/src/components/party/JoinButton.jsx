@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { joinParty, leaveParty } from "@/lib/parties/member-actions";
 
 const primaryClass =
-  "rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60";
+  "rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-foreground disabled:opacity-60";
 const secondaryClass =
   "rounded-xl border border-line px-4 py-2.5 text-sm font-medium disabled:opacity-60";
 const disabledClass =
@@ -86,7 +86,7 @@ export function JoinButton({ partyId, state }) {
     case "pending":
       control = (
         <div className="grid gap-2">
-          <p className="rounded-xl bg-soft px-4 py-2.5 text-center text-sm font-medium text-soft-foreground">
+          <p className="rounded-xl bg-highlight px-4 py-2.5 text-center text-sm font-medium text-highlight-foreground">
             รอเจ้าของตี้อนุมัติ
           </p>
           <ConfirmDialog

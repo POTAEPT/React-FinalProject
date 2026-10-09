@@ -4,7 +4,7 @@ import { useId, useRef, useState, useTransition } from "react";
 
 const toneClass = {
   danger: "bg-danger text-danger-foreground",
-  primary: "bg-accent text-accent-foreground",
+  primary: "bg-brand text-brand-foreground",
 };
 
 // A button that asks before it acts. onConfirm runs a Server Action and returns

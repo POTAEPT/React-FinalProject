@@ -1,30 +1,82 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
-import AvatarUploader from '@/components/account/AvatarUploader'
+import AvatarUploader, { avatarFileError } from '@/components/account/AvatarUploader'
+import { uploadAvatar } from '@/lib/avatar/actions'
 import { updateDisplayName } from '@/lib/auth/profile-actions'
 
-// Threads-style edit sheet: a labelled row per field and a full-width Done.
-// The photo saves as soon as it is picked; the name saves on Done.
-export function EditProfileForm({ userId, displayName, email, avatarUrl }) {
+// Threads-style edit sheet: a labelled row per field, then "ยกเลิก" and
+// "บันทึก". Nothing is saved until "บันทึก": a picked photo is only a
+// preview, so cancelling (or closing the sheet) discards every change.
+// closeHref: where to go after saving or cancelling when the sheet opened on
+// a direct visit; without it the sheet goes back in history, like Modal.
+export function EditProfileForm({ userId, displayName, email, avatarUrl, closeHref }) {
   const router = useRouter()
   const [name, setName] = useState(displayName)
+  const [file, setFile] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [fileError, setFileError] = useState('')
   const [error, setError] = useState(null)
   const [isPending, startTransition] = useTransition()
+
+  const nameChanged = name.trim() !== displayName
+  const dirty = nameChanged || Boolean(file)
+
+  // Free the picked file's blob: URL when it is replaced or the sheet closes.
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview)
+  }, [preview])
+
+  function close() {
+    if (closeHref) {
+      router.replace(closeHref)
+    } else {
+      router.back()
+    }
+  }
+
+  function onPick(picked) {
+    const problem = avatarFileError(picked)
+    setFileError(problem ?? '')
+    if (problem) return
+
+    setFile(picked)
+    setPreview(URL.createObjectURL(picked))
+  }
 
   function onSubmit(event) {
     event.preventDefault()
     setError(null)
-    startTransition(async () => {
-      const result = name.trim() === displayName ? { ok: true } : await updateDisplayName(name)
 
-      if (!result.ok) {
-        setError(result.error)
-        return
+    if (!dirty) {
+      close()
+      return
+    }
+
+    startTransition(async () => {
+      if (file) {
+        const upload = await uploadAvatar({ userId, file })
+
+        if (!upload.ok) {
+          setError(upload.message)
+          return
+        }
+
+        // The photo is saved; a later name error must not upload it again.
+        setFile(null)
       }
 
-      router.back()
+      if (nameChanged) {
+        const result = await updateDisplayName(name)
+
+        if (!result.ok) {
+          setError(result.message)
+          return
+        }
+      }
+
+      close()
       router.refresh()
     })
   }
@@ -45,7 +97,13 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl }) {
             className="w-full bg-transparent py-1 text-base outline-none placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           />
         </div>
-        <AvatarUploader userId={userId} currentAvatarUrl={avatarUrl} name={displayName} />
+        <AvatarUploader
+          previewUrl={preview ?? avatarUrl}
+          onPick={onPick}
+          name={name || displayName}
+          disabled={isPending}
+          error={fileError}
+        />
       </div>
       <div className="grid gap-1 border-b border-line pb-3">
         <p className="text-sm font-semibold">อีเมล</p>
@@ -56,13 +114,26 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl }) {
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="press rounded-2xl bg-foreground px-4 py-3.5 text-base font-semibold text-background disabled:opacity-60"
-      >
-        {isPending ? 'กำลังบันทึก...' : 'เสร็จสิ้น'}
-      </button>
+      <p className="text-sm text-muted" aria-live="polite">
+        {dirty ? 'มีการแก้ไขที่ยังไม่ได้บันทึก' : 'ยังไม่มีการแก้ไข'}
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={close}
+          disabled={isPending}
+          className="press rounded-2xl border border-line px-4 py-3.5 text-base font-semibold disabled:opacity-60"
+        >
+          ยกเลิก
+        </button>
+        <button
+          type="submit"
+          disabled={isPending || !dirty}
+          className="press rounded-2xl bg-brand px-4 py-3.5 text-base font-semibold text-brand-foreground disabled:opacity-60"
+        >
+          {isPending ? 'กำลังบันทึก...' : 'บันทึก'}
+        </button>
+      </div>
     </form>
   )
 }

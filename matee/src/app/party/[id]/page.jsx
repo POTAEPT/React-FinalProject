@@ -143,7 +143,9 @@ export default async function PartyPage({ params }) {
             <dt className="text-muted">สถานะ</dt>
             <dd className="mt-1 font-medium">{statusLabel(party)}</dd>
           </div>
-          {party.pendingCount != null ? (
+          {/* Pending requests only exist in approve mode; the count is only
+              known to the host (RLS), so others get null. */}
+          {party.pendingCount != null && party.joinMode === "approve" ? (
             <div>
               <dt className="text-muted">รอการยืนยัน</dt>
               <dd className="mt-1 font-medium">{party.pendingCount} คน</dd>
@@ -157,8 +159,8 @@ export default async function PartyPage({ params }) {
           <p className="text-sm text-muted">ยังไม่มีรายละเอียดเพิ่ม</p>
         )}
         <Link
-          href={`/?category=${party.category}`}
-          className="text-sm font-medium text-accent"
+          href={`/search?category=${party.category}`}
+          className="w-fit text-sm font-medium text-accent underline underline-offset-4"
         >
           ตี้อื่นในหมวด {categoryLabel(party.category)}
         </Link>

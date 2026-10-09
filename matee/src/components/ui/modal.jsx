@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 export function Modal({ title, children, closeHref }) {
   const router = useRouter();
   const panelRef = useRef(null);
+  const backdropRef = useRef(null);
 
   function close() {
     if (closeHref) {
@@ -24,6 +25,15 @@ export function Modal({ title, children, closeHref }) {
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
     panelRef.current?.focus();
+
+    // Keep Tab and screen readers inside the sheet: everything else on the
+    // page becomes inert while it is open (elements already inert stay so).
+    const background = [...document.body.children].filter(
+      (element) => !element.contains(backdropRef.current) && !element.inert,
+    );
+    background.forEach((element) => {
+      element.inert = true;
+    });
 
     function onKey(event) {
       if (event.key === "Escape") {
@@ -40,12 +50,16 @@ export function Modal({ title, children, closeHref }) {
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
+      background.forEach((element) => {
+        element.inert = false;
+      });
       previous?.focus?.();
     };
   }, [router, closeHref]);
 
   return (
     <div
+      ref={backdropRef}
       className="modal-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50 md:p-3"
       onPointerDown={(event) => {
         if (event.target === event.currentTarget) {

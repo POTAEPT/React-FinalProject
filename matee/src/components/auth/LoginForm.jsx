@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from '@/lib/auth/actions'
 import { AuthDivider, AuthShell, authButtonClass, authInputClass } from '@/components/auth/AuthShell'
@@ -11,7 +11,6 @@ import { safeNextPath } from '@/lib/auth/next-path'
  * หน้าที่คือจัดการ State (กำลังโหลด, ข้อผิดพลาด) และส่งข้อมูลไปหาฟังก์ชัน signIn
  */
 export default function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = safeNextPath(searchParams.get('next'))
   
@@ -39,8 +38,11 @@ export default function LoginForm() {
       return
     }
 
-    router.push(nextPath)
-    router.refresh()
+    // A full page load, not router.push + router.refresh: refresh would
+    // re-request /login, which now redirects signed-in users, and the two
+    // navigations could race. A fresh load also renders the header with the
+    // new session and keeps /login out of the history (Back skips it).
+    window.location.replace(nextPath)
   }
 
   return (

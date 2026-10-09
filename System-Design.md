@@ -3,7 +3,7 @@
 > เอกสารออกแบบระบบของ MaTee (มาตี้กัน) สำหรับทุกคนในทีมและ AI agent ที่เขียนโค้ดในโปรเจกต์นี้
 > เป้าหมายคือให้ทุกคนเขียนโค้ดไปในทางเดียวกัน: โครงสร้างไฟล์, รูปแบบ Server Action, การเช็คสิทธิ์, ข้อความ UI และวิธีทดสอบ
 >
-> **อัปเดตล่าสุด:** 2026-10-08 · อ้างอิงโค้ดบน branch `5-add-live-party-chat-with-a-7-day-expiry` (มีงาน #3, #5, #6) และงาน admin บน branch `22-sub-issue-1-admin-access-and-dashboard`
+> **อัปเดตล่าสุด:** 2026-10-09 · อ้างอิงโค้ดบน branch `development` (มีงาน #3, #5, #6, PR #49 "Restyle the app like Threads" และ PR #50 ธีมขาวดำ) และงาน admin บน branch `22-sub-issue-1-admin-access-and-dashboard`
 
 ## สารบัญ
 1. [วิธีใช้เอกสารนี้](#1-วิธีใช้เอกสารนี้)
@@ -130,19 +130,32 @@ React-FinalProject/
 └── matee/                    แอป Next.js
     ├── AGENTS.md / CLAUDE.md คำเตือนเรื่อง Next 16 สำหรับ agent
     ├── next.config.mjs       reactCompiler, images.remotePatterns (Supabase storage)
+    ├── public/brand/         โลโก้ MaTee (mark / lockup / tile) แบบ light และ dark
     └── src/
         ├── middleware.js     ← จะเปลี่ยนเป็น proxy.js (ดู Known issues)
         ├── app/              routes (หัวข้อ 6)
+        │   ├── layout.jsx    html + ธีม + BootSplash + AppShell + slot `modal`
+        │   ├── @modal/       parallel route ของ modal (ตั้งตี้, แก้ไขโปรไฟล์) ดูหัวข้อ 14
+        │   └── icon.png      favicon
         ├── components/
-        │   ├── ui/           ชิ้นพื้นฐาน: Button, FormField, AlertMessage, ConfirmDialog, TimeSelect
-        │   ├── auth/         LoginForm, RegisterForm
-        │   ├── account/      AvatarUploader, ProfileCard, ClaimsPanel, SignOutButton
-        │   ├── party/        JoinButton, ManageControls, PartyForm (ใช้ทั้ง /create และแก้ไขตี้)
-        │   ├── chat/         PartyChat (client), PartyChatSection (server)
-        │   └── party-card.jsx, party-feed.jsx, party-filters.jsx, site-header.jsx
+        │   ├── app-shell.jsx      กรอบทุกหน้า: sidebar/แถบมือถือ, คอลัมน์กลาง, ปุ่ม + ลอย, กล่อง guest
+        │   ├── site-header.jsx    sidebar (desktop), แถบบน + แถบล่าง (มือถือ), เมนูธีม/บัญชี
+        │   ├── boot-splash.jsx    โลโก้หมุนตอนโหลดหน้าครั้งแรก
+        │   ├── brand-logo.jsx     โลโก้ light/dark ตามธีม
+        │   ├── party-composer.jsx แถว "ตั้งตี้ใหม่…" บน feed (ลิงก์ไป /create)
+        │   ├── party-search.jsx   ช่องค้นหา + ตัวกรองวันที่/host ของ /search
+        │   ├── party-filters.jsx  chip เปิดรับ/หมวดหมู่ของ /search
+        │   ├── party-card.jsx, party-feed.jsx
+        │   ├── ui/           Button, FormField, AlertMessage, ConfirmDialog, TimeSelect, modal (Modal)
+        │   ├── auth/         AuthShell, LoginForm, RegisterForm
+        │   ├── account/      AvatarUploader, EditProfileForm, edit-profile (server), ProfileCard, ClaimsPanel, SignOutButton
+        │   ├── party/        JoinButton, ManageControls, PartyForm (สร้าง + แก้ไข), create-party (server)
+        │   └── chat/         PartyChat (client), PartyChatSection (server)
         └── lib/
             ├── supabase/     server.js · client.js · middleware.js · env.js
-            ├── auth/         actions.js (browser) · get-session.js (server)
+            ├── auth/         actions.js (browser) · get-session.js · account.js (loadAccount, cache ต่อ request)
+            │                 profile-actions.js (updateDisplayName) · next-path.js · redirect-signed-in.js
+            ├── theme.js      ค่าธีมและชื่อ cookie
             ├── avatar/       actions.js
             ├── parties/      queries · member-actions · my-commitments · member-state
             │                 my-party · schema · time · categories · filters
@@ -174,19 +187,23 @@ React-FinalProject/
 
 | Route | สิทธิ์ | Render | ทำอะไร | สถานะ |
 |---|---|---|---|---|
-| `/` | ทุกคน | Server + client filters | feed ตี้ที่ open, ยังไม่เต็ม, ยังไม่เริ่ม · ค้นหา `?q=` · หมวด `?category=` · `?availability=all` · การ์ดแสดงสถานะชนเวลา | ✅ (live slot count ⏳ #8) |
+| `/` | ทุกคน | Server | แถว composer "ตั้งตี้ใหม่…" + feed ตี้ที่ open, ยังไม่เต็ม, ยังไม่เริ่ม (การ์ดแบบโพสต์ Threads พร้อมแถบที่นั่งและสถานะชนเวลา) ตัวกรองย้ายไป `/search` แล้ว | ✅ (live slot count ⏳ #8) |
+| `/search` | ทุกคน | Server + client ค้นหา/chip | ค้นหา `?q=` (ชื่อ/สถานที่), chip `?availability=open` และ `?category=`, ตัวกรอง `?after=` `?before=` (วันที่) `?host=` (ชื่อ host) ค่าเริ่มต้นแสดงทุกตี้ที่ไม่ถูกยกเลิก ถ้ายังไม่ค้นจะแสดง "ตี้แนะนำ" (เปิดรับ) | ✅ |
 | `/party/[id]` | ทุกคน | Server + client ปุ่ม/แชท | รายละเอียด, ปุ่มตามสถานะ (`memberActionState`), แชท `#chat` (`chatAccess`) | ✅ |
-| `/create` | User | Server + client form | ฟอร์มตั้งตี้ + เช็คเวลาชน | ✅ |
+| `/create` | User | Modal บน feed | ฟอร์มตั้งตี้ (`PartyForm`) + เช็คเวลาชน เปิดเป็น modal ทับหน้าเดิมเมื่อกดจากในแอป และเปิดทับ feed เมื่อเข้า URL ตรง (ปิดแล้วไป `/`) | ✅ |
 | `/my-party` | User | Server | agenda จัดกลุ่มตามวัน, ส่วน "ที่ผ่านมา", ปุ่มแชท, เฟือง + badge pending | ✅ |
-| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม/ฟอร์ม | ยืนยัน/ปฏิเสธคำขอ (ปฏิเสธมี dialog), รายชื่อสมาชิก, รายการ "ปฏิเสธแล้ว" ให้เปลี่ยนใจยืนยันได้, แก้ไขรายละเอียดตี้ (ก่อนตี้เริ่ม), ยกเลิกตี้ (dialog) | ✅ |
+| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม/ฟอร์ม | ยืนยัน/ปฏิเสธคำขอ (ปฏิเสธมี dialog), รายชื่อสมาชิก, รายการ "ปฏิเสธแล้ว" ให้เปลี่ยนใจยืนยันได้, แก้ไขรายละเอียดตี้ (ก่อนตี้เริ่ม), ยกเลิกตี้ (dialog) · `<AutoRefresh>` refresh หน้าทุก 15 วินาทีตอนแท็บเปิดอยู่ (คำขอใหม่โผล่เอง เพราะ `party_members` ไม่อยู่ใน Realtime) ฟอร์มที่พิมพ์ค้างไม่หาย | ✅ |
 | `/login` | Guest | Client form | ล็อกอินแล้วกลับไปที่ `?next=` | ✅ |
 | `/register` | Guest | Client form | สมัคร (display name, email, password) | ✅ |
-| `/account` | User | Server | โปรไฟล์, อัปโหลด avatar, claims ของ JWT, sign out | ✅ |
+| `/account` | User | Server | โปรไฟล์ (ชื่อ, อีเมล, role, avatar), จำนวนตี้ที่ตั้ง/เข้าร่วม, แท็บ `?tab=joined`, ปุ่มแก้ไขโปรไฟล์และออกจากระบบ | ✅ |
+| `/account/edit` | User | Modal บนโปรไฟล์ | แก้ชื่อที่แสดง (`updateDisplayName`) และเปลี่ยนรูป (`uploadAvatar`) เข้า URL ตรงแล้วปิดจะไป `/account` | ✅ |
 | `/banned` | ทุกคน | Server | หน้าแจ้งว่าถูกแบน | ✅ |
-| `/categories`, `/discover` | ทุกคน | Server | กริดหมวด / redirect ไป `/` | 🌿 branch 22 |
+| `/categories`, `/discover` | ทุกคน | Server | กริดหมวด / redirect ไป `/` (หน้าที่ซ้ำกับ `/search` แล้ว ควรตัดสินใจก่อน merge) | 🌿 branch 22 |
 | `/admin`, `/admin/parties`, `/admin/users`, `/admin/parties/[id]` | Admin (คนอื่นได้ 404) | Server + client ปุ่ม | dashboard, จัดการตี้, แบนผู้ใช้, ดูแลแชท | 🌿 branch 22 (#7, #24) |
 
-**Route ที่ middleware บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
+**หน้าที่ไม่มีกรอบแอป:** `/login`, `/register`, `/banned` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
+
+**Route ที่ middleware บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` (รวม `/account/edit`) ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
 
 **รูปแบบ id ใน URL:** ทุกหน้าที่รับ `[id]` ต้องเช็ค UUID ด้วย regex ก่อน query ถ้าไม่ผ่านให้เรียก `notFound()`
 ```js
@@ -202,9 +219,10 @@ const partyIdPattern =
 ```
 LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPassword (browser client)
          ◄─ Supabase ส่ง session กลับ ─► @supabase/ssr เขียน cookie  sb-<project>-auth-token
-         ─► router.push(next) + router.refresh()
+         ─► window.location.replace(next)   (โหลดหน้าใหม่พร้อม session)
 ```
 - `lib/auth/actions.js` **ไม่ใช่ Server Action** (ไม่มี `"use server"`) เพราะใช้ browser client
+- หลังล็อกอินหรือสมัครสำเร็จ ให้ใช้ `window.location.replace(next)` (โหลดหน้าใหม่ทั้งหน้า) **ห้ามใช้ `router.push()` คู่กับ `router.refresh()`** เพราะ refresh จะดึง `/login` ซ้ำ ซึ่ง redirect คนที่ล็อกอินแล้ว และ navigation 2 ตัวจะแข่งกันจนวนได้
 - สมัคร: `signUp({ displayName, email, password })` ส่ง `options.data.display_name` ให้ trigger `handle_new_user` สร้างแถวใน `profiles`
 - ไม่มี route API สำหรับล็อกอิน การทดสอบอัตโนมัติจึงต้องล็อกอินผ่าน Supabase Auth แล้วนำ cookie มาใช้ (ดูหัวข้อ 17)
 - คนที่ล็อกอินอยู่แล้วเปิด `/login` หรือ `/register` จะถูก redirect ไป `?next=` หรือ `/` (`lib/auth/redirect-signed-in.js` เรียกในตัว page ไม่ได้ทำใน middleware)
@@ -213,8 +231,10 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 ### Session ฝั่ง server
 | ต้องการ | ใช้ | เหตุผล |
 |---|---|---|
-| รู้ว่าใครเรียก ใน Server Action หรือ Server Component | `const { data: { user } } = await supabase.auth.getUser()` | ตรวจ token กับ Supabase Auth จึงเชื่อถือได้ ใช้เป็นมาตรฐาน |
-| ต้องการ claims ของ JWT + profile (หน้า `/account`) | `getSession()` จาก `lib/auth/get-session.js` | ตรวจลายเซ็น JWT กับ JWKS ด้วย `jose` แล้วโหลด profile (ต้องตั้ง JWT Signing Keys เป็นแบบ asymmetric) |
+| รู้ว่าใครเรียก ใน Server Component (page, layout, query ใน `lib/*/queries.js`) | `await getCurrentUser()` จาก `lib/auth/current-user.js` | `getUser()` ห่อด้วย `cache()` ของ React ทั้ง layout, page และ query ใน request เดียวกันจึงตรวจ token กับ Supabase Auth ครั้งเดียว คืน `null` สำหรับ guest |
+| รู้ว่าใครเรียก ใน Server Action | `const { data: { user } } = await supabase.auth.getUser()` | `cache()` ไม่มีผลใน Server Action จึงเรียกเองทุก action ตรวจ token กับ Supabase Auth จึงเชื่อถือได้ |
+| ต้องการ claims ของ JWT + profile (`/account`, `/account/edit`) | `getSession()` จาก `lib/auth/get-session.js` | ตรวจลายเซ็น JWT กับ JWKS ด้วย `jose` แล้วโหลด profile (ต้องตั้ง JWT Signing Keys เป็นแบบ asymmetric) |
+| ชื่อ + avatar ของคนที่ล็อกอิน (shell, composer, ฟอร์มตั้งตี้) | `loadAccount()` จาก `lib/auth/account.js` | ใช้ `getCurrentUser()` แล้วโหลด profile ห่อด้วย `cache()` เหมือนกัน คืน `null` สำหรับ guest |
 | **ห้ามใช้** | `supabase.auth.getSession()` เพื่อตัดสินสิทธิ์ | อ่าน cookie ตรงๆ โดยไม่ตรวจ ปลอมได้ |
 
 ### middleware.js (ทุก request ยกเว้นไฟล์ static)
@@ -259,7 +279,7 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 |---|---|
 | `party_category` | `sport` กีฬา · `board_game` บอร์ดเกม · `study` ติวสอบ · `cafe` คาเฟ่ · `other` อื่นๆ (ใช้คู่กับ `custom_category`) |
 | `party_status` | `open` · `cancelled` (เปลี่ยนได้ทางเดียว) |
-| `party_join_mode` | `public` (เข้าได้ทันที) · `approve` (รอ host ยืนยัน) |
+| `party_join_mode` | `public` (ป้าย "เข้าได้ทันที") · `approve` (ป้าย "ต้องขออนุมัติ") |
 | `member_status` | `pending` · `confirmed` · `rejected` · `cancelled` (ออกเอง) |
 | `user_role` | `user` · `admin` |
 
@@ -370,6 +390,9 @@ party_members                 party_messages
 | แชทใกล้หมดอายุ | `แชทจะหายไปใน N วัน` |
 | แชทหมดอายุ | `แชทหมดอายุแล้ว` |
 | ส่วนพับใน `/my-party` | `ที่ผ่านมา` |
+| วิธีเข้าร่วม (ป้ายของตี้) | `เข้าได้ทันที` / `ต้องขออนุมัติ` เป็นกติกาของตี้ ไม่ใช่สถานะของคนดู สถานะของคนดูใช้ `รอเจ้าของตี้อนุมัติ` |
+| role | `ผู้ใช้` / `ผู้ดูแลระบบ` ห้ามแสดง `user`/`admin` ดิบ |
+| หน้า error | ข้อความไทยทั่วไป + รหัสอ้างอิง (`error.digest`) **ห้ามแสดง `error.message`** |
 
 ---
 
@@ -412,7 +435,8 @@ party_members                 party_messages
 ```js
 "use server";
 export async function doSomething(partyId, input) {
-  // 1. ตรวจ input ด้วย regex/zod → { ok:false, code:"not_found" | "invalid" }
+  // ความล้มเหลวทุกแบบคืนผ่าน fail(code, message) จาก lib/action-result.js
+  // 1. ตรวจ input ด้วย regex/zod → fail("not_found" | "invalid", ...)
   // 2. const supabase = await createClient(); const { data: { user } } = await supabase.auth.getUser();
   //    ไม่มี user → code:"unauthenticated"
   // 3. โหลดข้อมูลที่ต้องใช้ตัดสิน (ตี้, แถวสมาชิก)
@@ -440,10 +464,11 @@ export async function doSomething(partyId, input) {
 | `decideRequest(memberId, 'confirmed'\|'rejected')`, `cancelParty(id)` | `lib/parties/member-actions.js` | ข้างบน + `/manage/[id]` |
 | `updateParty(partyId, input)` (ส่งเข้า PartyForm ด้วย `.bind(null, partyId)`) | `lib/parties/party-actions.js` | `/`, `/party/[id]`, `/manage/[id]`, `/my-party` |
 | `sendPartyMessage(id, body)` | `lib/chat/actions.js` | – (อัปเดตผ่าน Realtime) |
-| `uploadAvatar({ userId, file })` | `lib/avatar/actions.js` | – |
+| `uploadAvatar({ userId, file })` → `{ ok, publicUrl }` | `lib/avatar/actions.js` | `/` (layout) |
+| `updateDisplayName(name)` | `lib/auth/profile-actions.js` | `/` (layout) |
 | admin: `cancelPartyAsAdmin`, `deletePartyAsAdmin`, `setUserBannedAsAdmin`, `deleteMessageAsAdmin` | `lib/admin/actions.js` (branch 22) | `/`, `/admin/*`, `/party/[id]` |
 
-> ⚠️ `lib/admin/actions.js` และ `lib/avatar/actions.js` ยังคืน `{ ok:false, error }` หรือ `{ error }` ซึ่งไม่ตรงมาตรฐาน 11.1 ควรปรับให้ตรงเมื่อแก้ไฟล์นั้นครั้งถัดไป
+> ⚠️ `lib/admin/actions.js` (branch 22) ยังคืน `{ ok:false, error }` ซึ่งไม่ตรงมาตรฐาน 11.1 จะปรับหลัง branch 22 merge (action อื่นตรงมาตรฐานแล้ว)
 
 ---
 
@@ -451,7 +476,7 @@ export async function doSomething(partyId, input) {
 
 | ฟังก์ชัน | ไฟล์ | คืนอะไร |
 |---|---|---|
-| `listParties({ q, category, availability })` | `lib/parties/queries.js` | `{ ok, parties, viewerId, commitments }` ตัดตี้ของ host ที่ถูกแบน |
+| `listParties({ q, category, availability, after, before, host })` | `lib/parties/queries.js` | `{ ok, parties, commitments }` ตัดตี้ของ host ที่ถูกแบน · `after`/`before` กรองวันที่ใน DB, `q`/`host` กรองหลัง query · ค่า filter อ่านจาก URL ด้วย `readFeedFilters(searchParams, defaultAvailability)` (`/` ใช้ `open`, `/search` ใช้ `all`) |
 | `getParty(id)` | 〃 | `{ ok, party }` (`null` ถ้าไม่มีหรือ host ถูกแบน) |
 | `getViewerMembership(partyId)` | 〃 | `{ user, membership, commitments }` |
 | `listPartyMembers(partyId)` | 〃 | `{ ok, members }` พร้อม `displayName`, `avatarUrl` |
@@ -494,98 +519,122 @@ export async function doSomething(partyId, input) {
 - ใช้คำว่า "ตี้" (ไม่ใช้ "ปาร์ตี้") และ "เจ้าของตี้" (ไม่ใช้ "โฮสต์") ให้สม่ำเสมอ
 - title ของหน้า: `"<ชื่อหน้า> | MaTee"`
 
-### Color theme: "Lagoon Sunset"
-พาเลตหลักจาก [Color Hunt](https://colorhunt.co/palette/8ad6d1359fa0fff0c5ff8c52) 4 สี: **Mint** `#8AD6D1` · **Teal** `#359FA0` · **Cream** `#FFF0C5` · **Orange** `#FF8C52`
+### Color theme: Monochrome (ตั้งแต่ PR #50)
+พื้น ตัวอักษร และปุ่มเป็น**ขาว ดำ และเทา** แต่ไม่ได้ขาวดำล้วน (ทีมเห็นว่าดูเหมือนช่วงไว้อาลัย) จึงใช้**สีจากโลโก้เป็นจุดเน้นเล็กน้อย**:
+- **โลโก้เป็นสีเต็ม** (ไม่ grayscale)
+- **`brand`** (teal เข้ม / mint) ใช้กับแถบที่นั่ง
+- **`brand-soft`** (mint อ่อน) ใช้กับเมนูและ chip ที่เลือก
+- **`highlight`** (ส้ม) ใช้กับสถานะรออนุมัติ
+- **`danger`** (แดง) ใช้กับ error และการยกเลิก
 
-สีดิบของ Color Hunt ใช้เป็นตัวอักษรบนพื้นหลังอีกสีตรงๆ ไม่ได้ทุกคู่ (เช่น ขาวบน `#359FA0` ได้แค่ 3.17:1 ต่ำกว่า 4.5:1 ของ WCAG AA) จึงเพิ่มสีช่วย 3 ตัวที่ปรับเฉดจากพาเลตเดิม: **Ink** `#17383A` (ตัวอักษร), **Deep Teal** `#1F7173` (ปุ่ม/ลิงก์บนพื้นสว่าง), **Card** `#FFF9E3` (cream อ่อนลง)
-
-| บทบาท | สีดิบจาก Color Hunt | ใช้ที่ไหน |
-|---|---|---|
-| Mint | `#8AD6D1` | chip, พื้น badge, accent ใน dark mode |
-| Teal | `#359FA0` | แถบสีบนสุดของ header และการ์ด auth, โลโก้, ไอคอน, ลวดลายตกแต่ง (ไม่ใช้เป็นสีตัวอักษรหรือ focus ring) |
-| Cream | `#FFF0C5` | พื้นหลังหน้า (light), ตัวอักษรหลัก (dark) |
-| Orange | `#FF8C52` | ปุ่ม CTA รอง, badge pending, จุดเน้น (ตัวอักษรบนส้มต้องใช้ Ink) |
+ธีมเดิม "Lagoon Sunset" (พื้น cream) เลิกใช้แล้ว
 
 ### Design tokens (`src/app/globals.css`)
+token แต่ละตัว**เขียนครั้งเดียว**ด้วย `light-dark(ค่าสว่าง, ค่ามืด)` ฝั่งที่ใช้มาจาก `color-scheme` จึงไม่มี block มืดแยกให้ต้องคอยแก้ให้ตรงกันอีก
+
 | Token (Tailwind) | Light | Dark | ใช้กับ |
 |---|---|---|---|
-| `background` | `#FFF0C5` | `#0F2627` | พื้นหลังหน้า |
-| `card` | `#FFF9E3` | `#163535` | การ์ด / กล่อง |
-| `foreground` | `#17383A` | `#FFF0C5` | ตัวอักษรหลัก |
-| `muted` | `#4A6B6C` | `#9FBFBD` | ตัวอักษรรอง |
-| `line` | `#E6D5A3` | `#2A4F4F` | เส้นขอบ |
-| `accent` + `accent-foreground` | `#1F7173` + `#FFFFFF` | `#8AD6D1` + `#0F2627` | ปุ่มหลัก, ลิงก์เด่น |
-| `brand` | `#359FA0` | `#359FA0` | แถบ header (`border-t-brand`), โลโก้, ไอคอน (ห้ามใช้เป็นสีตัวอักษร) |
-| `soft` + `soft-foreground` | `#8AD6D1` + `#17383A` | `#1F4F4F` + `#8AD6D1` | chip, หมวดหมู่, badge ทั่วไป |
-| `highlight` + `highlight-foreground` | `#FF8C52` + `#17383A` | `#FF8C52` + `#0F2627` | CTA รอง, badge pending, จุดเน้น |
-| `danger` / `danger-bg` / `danger-line` | `#9A2B1C` / `#FDE9E2` / `#F2B8A5` | `#FFB4A2` / `#3A1E1A` / `#7A3A2E` | error / แบนเนอร์ยกเลิก |
-| `danger-foreground` | `#FFFFFF` | `#0F2627` | ตัวอักษรบนปุ่ม `bg-danger` (เช่น ยกเลิกตี้) contrast 7.67 / 9.27 |
+| `card` | `#FFFFFF` | `#0A0A0A` | **พื้นหลังหน้า** (`body`) คอลัมน์เนื้อหา การ์ด modal |
+| `background` | `#F3F3F3` | `#1C1C1C` | พื้นของ hover, รายการที่เลือก, ช่องกรอก, ฟองแชทของคนอื่น (ต้องต่างจาก `card`) |
+| `foreground` | `#0A0A0A` | `#F5F5F5` | ตัวอักษรหลัก |
+| `muted` | `#6B6B6B` | `#A0A0A0` | ตัวอักษรรอง |
+| `line` | `#E2E2E2` | `#2E2E2E` | เส้นขอบ / เส้นคั่น |
+| `accent` + `accent-foreground` | `#0A0A0A` + `#FFFFFF` | `#F5F5F5` + `#0A0A0A` | ลิงก์, focus ring (เท่ากับ `foreground`) |
+| `soft` + `soft-foreground` | `#ECECEC` + foreground | `#262626` + foreground | chip หมวด, avatar ตัวอักษร, สถานะรออนุมัติ, แถบประกาศ |
+| `brand` + `brand-foreground` | `#1F7173` (teal เข้ม) + `#FFFFFF` | `#8AD6D1` (mint) + `#0A0A0A` | **ปุ่มหลัก**, แถบที่นั่ง, เส้นขอบของ chip ที่เลือก **ห้ามใช้ `brand` เป็นสีตัวอักษร** |
+| `brand-soft` | `#E3F4F3` | `#173434` | พื้นของเมนูที่เลือกใน sidebar และ chip ที่เลือกใน `/search` (คู่กับ `border-brand`) |
+| `highlight` + `highlight-foreground` | `#FF8C52` + `#0A0A0A` | `#FF8C52` + `#0A0A0A` | สถานะ "รอ": ปุ่มรอเจ้าของตี้อนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง, จุดบอกว่ามีตัวกรอง |
+| `danger` / `danger-bg` / `danger-line` | `#B3261E` / `#FDECEA` / `#F3B9B4` | `#FF8A80` / `#2A1513` / `#6E3A35` | error, แบนเนอร์ยกเลิก, ออกจากระบบ |
+| `danger-foreground` | `#FFFFFF` | `#0A0A0A` | ตัวอักษรบนปุ่ม `bg-danger` |
 
-ค่า contrast ที่คำนวณแล้ว (เกณฑ์ WCAG AA: ตัวอักษรปกติ ≥ 4.5, ข้อความใหญ่/ไอคอน ≥ 3)
+**Contrast ที่คำนวณแล้ว** (เกณฑ์ WCAG AA: ตัวอักษร ≥ 4.5, เส้นขอบของ UI และ focus ≥ 3)
 
-| คู่สี | อัตราส่วน |
-|---|---|
-| foreground บน background (light) | 11.14 |
-| muted บน card (light) | 5.51 |
-| accent-foreground บน accent (light) | 5.73 |
-| ตัวอักษร Ink บน highlight | 5.49 |
-| ตัวอักษร Ink บน soft | 7.59 |
-| danger บน card (light) | 7.28 |
-| foreground บน background (dark) | 13.96 |
-| muted บน card (dark) | 6.69 |
-| accent-foreground บน accent (dark) | 9.51 |
-| ตัวอักษร `#0F2627` บน highlight (dark) | 6.88 |
+| คู่สี | Light | Dark |
+|---|---|---|
+| foreground บน card | 19.80 | 18.16 |
+| muted บน card | 5.33 | 7.57 |
+| muted บน background (hover) | 4.80 | 6.52 |
+| muted บน soft (chip) | 4.51 (ใกล้เส้นพอดี ห้ามทำให้จางกว่านี้) | – |
+| foreground บน soft | 16.76 | 13.88 |
+| brand-foreground บน brand (ปุ่มหลัก) | 5.73 | 11.90 |
+| danger บน card / บน danger-bg | 6.54 / 5.72 | 8.67 / 7.57 |
+| danger-foreground บน danger | 6.54 | 8.67 |
+| accent เป็น focus ring บน card | 19.80 | 18.16 |
+| line บน card | **1.30** | **1.46** |
+| brand (แถบที่นั่ง) บนราง `line` / บน card | 4.0 / 5.7 | 8.16 / 11.90 |
+| foreground บน brand-soft / muted บน brand-soft | 17.44 / 4.69 | 12.21 / 5.09 |
+| highlight-foreground บน highlight | 8.60 | 8.60 |
+| highlight (จุดเล็ก) บน card | 2.30 ⚠️ ใช้เป็นจุดเสริมได้ ห้ามเป็นตัวบอกสถานะอย่างเดียว | 8.60 |
 
-ตัวอย่างการประกาศ (Tailwind 4)
-```css
-:root {
-  --background: #fff0c5;  --card: #fff9e3;  --foreground: #17383a;
-  --muted: #4a6b6c;       --line: #e6d5a3;
-  --accent: #1f7173;      --accent-foreground: #ffffff;
-  --brand: #359fa0;
-  --soft: #8ad6d1;        --soft-foreground: #17383a;
-  --highlight: #ff8c52;   --highlight-foreground: #17383a;
-  --danger: #9a2b1c;      --danger-bg: #fde9e2;  --danger-line: #f2b8a5;
-  --danger-foreground: #ffffff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f2627; --card: #163535;     --foreground: #fff0c5;
-    --muted: #9fbfbd;      --line: #2a4f4f;
-    --accent: #8ad6d1;     --accent-foreground: #0f2627;
-    --soft: #1f4f4f;       --soft-foreground: #8ad6d1;
-    --highlight-foreground: #0f2627;
-    --danger: #ffb4a2;     --danger-bg: #3a1e1a; --danger-line: #7a3a2e;
-    --danger-foreground: #0f2627;
-  }
-}
-@theme inline {
-  --color-background: var(--background);  --color-card: var(--card);
-  --color-foreground: var(--foreground);  --color-muted: var(--muted);
-  --color-line: var(--line);              --color-brand: var(--brand);
-  --color-accent: var(--accent);          --color-accent-foreground: var(--accent-foreground);
-  --color-soft: var(--soft);              --color-soft-foreground: var(--soft-foreground);
-  --color-highlight: var(--highlight);    --color-highlight-foreground: var(--highlight-foreground);
-  --color-danger: var(--danger);          --color-danger-bg: var(--danger-bg);
-  --color-danger-foreground: var(--danger-foreground);
-  --color-danger-line: var(--danger-line);
-}
-```
+> `line` ต่ำกว่า 3:1 ใช้ได้กับ**เส้นคั่นตกแต่ง** แต่ช่องกรอกห้ามพึ่งเส้นขอบอย่างเดียวในการบอกว่าเป็นช่อง ต้องมีพื้น `background`, label หรือ placeholder ช่วย ส่วนโหมด `prefers-contrast: more` จะเปลี่ยน `--line` เป็น `muted` ให้เอง
 
 **กฎการใช้สี**
-- ปุ่มหลัก = `bg-accent text-accent-foreground` · ปุ่ม CTA รอง/สถานะรอ = `bg-highlight text-highlight-foreground` · chip = `bg-soft text-soft-foreground`
-- error/แบนเนอร์ยกเลิกใช้ token `danger*` แทน `text-red-700 dark:text-red-300` เดิม
-- `brand` (`#359FA0`) ใช้กับพื้นผิวและไอคอนเท่านั้น เพราะเป็นตัวอักษรบน cream ได้แค่ 2.8:1 หากต้องการลิงก์สีเขียวน้ำทะเลให้ใช้ `accent`
-- **focus ring ใช้ `accent`** (`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`) เพราะ `brand` บน cream ได้ 2.8:1 ต่ำกว่าเกณฑ์ 3:1 ของ outline ส่วน accent ได้ 5.05 (light) / 9.51 (dark)
-- ห้ามวางตัวอักษรบนพื้น `brand` (Ink บน brand ได้ 3.98, ขาวได้ 3.17 ต่ำกว่า 4.5) header จึงเป็นพื้น `card` ที่มีแถบ brand ด้านบน
-- ปุ่มอันตราย (ยกเลิกตี้) = `bg-danger text-danger-foreground` · badge สถานะใน `/my-party`: ยกเลิก = `danger*`, รออนุมัติ = `highlight`, ออกแล้ว = `border-line text-muted`
-- ห้ามใช้ส้มเป็นสีตัวอักษรบนพื้น cream (contrast ต่ำ) ใช้เป็นพื้นของ badge/ปุ่มเท่านั้น
+- **ปุ่มหลัก** (ทั้งกรอบแอป, sheet และในเนื้อหา) = `bg-brand text-brand-foreground` (รวม `ui/Button`, ConfirmDialog, FAB ตั้งตี้) ห้ามใช้ `bg-foreground`/`bg-accent` เป็นปุ่มหลักอีก · **ปุ่มรอง** = `border border-line` (มักเป็น `rounded-full`) · **ปุ่มอันตราย** = `bg-danger text-danger-foreground`
+- **chip หมวด / แถบประกาศ** = `bg-soft text-soft-foreground` · **ที่เลือกอยู่** (เมนู sidebar, chip ใน `/search`) = `bg-brand-soft` (+ `border-brand` สำหรับ chip)
+- **สถานะรอ** (ปุ่มรออนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง) = `bg-highlight text-highlight-foreground` · ยกเลิก = `danger*` · ออกแล้ว = `border-line text-muted`
+- **ใส่สีเพิ่มต้องใช้ token จากโลโก้เท่านั้น** (`brand`, `brand-soft`, `highlight`) และใช้เป็นจุดเน้น ไม่ใช่พื้นใหญ่ของหน้า
+- **ลิงก์ในข้อความต้องมีเส้นใต้** (`underline underline-offset-4`) เพราะ accent เป็นสีเดียวกับตัวอักษร ถ้าไม่มีเส้นใต้จะดูไม่ออกว่ากดได้
+- **สถานะต้องไม่สื่อด้วยสีอย่างเดียว** (ใน monochrome ทำไม่ได้อยู่แล้ว) ให้ใช้ข้อความ ไอคอน หรือรูปทรง (ขอบ/พื้น) ประกอบ
+- error และแบนเนอร์ยกเลิกใช้ `danger*` เท่านั้น
+- **focus ring** = `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`
 
-- **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):** ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`) `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ) ส่วน `globals.css` ใช้ token มืดเมื่อ `[data-theme="dark"]` หรือเมื่อระบบเป็นมืดและไม่ได้บังคับ light ผลคือไม่กะพริบตอนโหลด ปุ่มเลือกอยู่ในเมนูบัญชี (หรือปุ่มธีมของ guest) ใน `site-header.jsx`
-- **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าแก้ token มืด ต้องแก้ทั้ง 2 block ใน `globals.css` ให้เหมือนกัน
-- **Navbar:** จอ ≥ `sm` แสดงเมนูหลักบนแถบบน ส่วนมือถือย้ายไปแถบล่าง (`body` มี `pb-20 sm:pb-0` กันเนื้อหาโดนบัง) ด้านขวาเป็นเมนูบัญชี (รูป + ชื่อ → โปรไฟล์ / ธีม / ออกจากระบบ) หรือปุ่มเข้าสู่ระบบ / สมัครสมาชิกสำหรับ guest
-- รูปทรง: การ์ด `rounded-2xl border border-line bg-card p-5`, ปุ่ม `rounded-xl px-4 py-2.5 text-sm font-medium`, chip `rounded-full`
-- layout: `<main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">` (feed ใช้ `max-w-5xl`)
+- **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):**
+  - ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`)
+  - `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ)
+  - `globals.css` ตั้ง `color-scheme: light dark` เป็นค่าเริ่มต้น และ `[data-theme="light"]` / `[data-theme="dark"]` บังคับ `color-scheme` ข้างเดียว ทำให้ `light-dark()` ทุกตัวเลือกค่าถูก และไม่กะพริบตอนโหลด
+  - ปุ่มเลือกธีมอยู่ในเมนู "≡" (หัวข้อถัดไป)
+- **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าเพิ่ม token ใหม่ ให้เขียนเป็น `light-dark()` ใน `:root` แล้วผูกใน `@theme inline` ส่วนโลโก้ยังใช้ class `.brand-light` / `.brand-dark` ที่มีกฎทั้งแบบ `data-theme` และแบบ media query
+- `@media (prefers-contrast: more)` เปลี่ยน `--line` เป็นสี `muted` ให้เส้นขอบชัดขึ้น
+
+### กรอบแอป (App shell) แบบ Threads
+ทุกหน้า ยกเว้น `/login`, `/register`, `/banned` (`BARE_PATHS`) ถูกห่อด้วย `AppShell` (`components/app-shell.jsx`) + `SiteHeader` (`components/site-header.jsx`)
+
+| ขนาดจอ | ส่วนนำทาง | เนื้อหา |
+|---|---|---|
+| ≥ 72rem | **sidebar ซ้าย** (กว้าง 15rem) โลโก้เต็ม + ปุ่ม ≡, เมนู หาตี้ / ค้นหา / ตั้งตี้ / ตี้ของฉัน (+ โปรไฟล์ เมื่อล็อกอิน) guest มีปุ่มเข้าสู่ระบบ/สมัครด้านล่าง | คอลัมน์กลาง `md:max-w-2xl` เป็นการ์ด `rounded-3xl border` ชื่อหน้าอยู่เหนือการ์ด (`TITLES` ใน `app-shell.jsx`) และ footer © ใต้การ์ด จอ ≥ `xl` guest มีกล่อง "เข้าสู่ระบบหรือสมัครสมาชิก" ทางขวา |
+| `md` – 72rem | sidebar หดเหลือ **icon rail** (4.5rem) ปุ่ม ≡ ย้ายไปล่าง | เหมือนด้านบน |
+| < `md` (มือถือ) | **แถบบน** (เฉพาะหน้า `/` มีเมนู ≡ + โลโก้ + ค้นหา + เข้าสู่ระบบ; หน้า `/account` มีค้นหา + เฟือง) และ**แถบล่างแบบไอคอน** (ตี้ของฉัน / หน้าหลัก / โปรไฟล์) | เต็มจอ ไม่มีกรอบการ์ด `body` มี `pb-20 md:pb-0` กันแถบล่างบัง |
+
+- **ปุ่ม + ลอย** (`ตั้งตี้ใหม่`) มุมขวาล่างทุกหน้า ยกเว้น `/create`
+- **เมนู ≡** (`Dropdown` ใน `site-header.jsx`): แถว "ธีม" (กดเข้าไปเลือก 3 แบบ) และเมื่อล็อกอินมี "ตั้งค่าโปรไฟล์" (`/account/edit`) กับ "ออกจากระบบ" (สีแดง) ปิดด้วย Esc หรือคลิกข้างนอก
+- **หน้าที่มีหัวเรื่องของตัวเอง** (เช่น `/party/[id]`) ใช้แถบ `glass-card sticky top-0` ในการ์ด พร้อมปุ่มย้อนกลับ
+- หน้าจอ auth ใช้ `AuthShell` (`components/auth/AuthShell.jsx`) แสดงเต็มจอ ช่องกรอกและปุ่มสูง `h-14 rounded-2xl`
+- **โลโก้:** `BrandLogo` (`variant="full" | "icon"`) render รูปทั้ง light และ dark แล้วให้ CSS เลือกแสดงตามธีม จึงไม่กะพริบ
+
+### Modal (intercepting route)
+`/create` และ `/account/edit` เปิดเป็น sheet ทับหน้าเดิม โดยใช้ parallel route `app/@modal` + `layout.jsx` render `{modal}`:
+
+| ไฟล์ | ใช้เมื่อ |
+|---|---|
+| `@modal/(.)create/page.jsx`, `@modal/(.)account/edit/page.jsx` | กดลิงก์จากในแอป (soft navigation) ปิดแล้ว `router.back()` |
+| `@modal/create/page.jsx`, `@modal/account/edit/page.jsx` | เข้า URL ตรงหรือ refresh ปิดแล้วไป `closeHref` (`/` หรือ `/account`) |
+| `app/create/page.jsx`, `app/account/edit/page.jsx` | หน้าข้างหลัง modal (re-export ของ `/` และ `/account`) |
+| `@modal/page.jsx`, `@modal/default.jsx`, `@modal/[...catchAll]/page.jsx` | คืน `null` เพื่อปิด modal เมื่อไปหน้าอื่น |
+
+- ตัวฟอร์มอยู่ใน server component ชิ้นเดียว (`components/party/create-party.jsx`, `components/account/edit-profile.jsx`) ที่ทั้ง 2 แบบเรียกใช้ จึงมีฟอร์มเดียวให้ดูแล
+- `Modal` (`components/ui/modal.jsx`): `role="dialog" aria-modal="true"`, ปิดได้ด้วย Esc, คลิกฉากหลัง และปุ่ม ✕ ล็อก scroll ของ body, ใส่ `inert` ให้ลูกตัวอื่นของ `<body>` ตอนเปิด (Tab ไม่หลุดออกนอก sheet) และคืน focus เมื่อปิด มือถือเต็มจอ ส่วน `md` ขึ้นไปเป็นกล่อง `max-w-xl rounded-3xl`
+- **เพิ่ม modal ใหม่ต้องทำครบ 4 ไฟล์** ตามตารางด้านบน และฟอร์มที่ปิด modal เองหลังบันทึกต้องใช้ `closeHref` เดียวกับ `Modal` ห้ามใช้ `router.back()` อย่างเดียว
+- **ฟอร์มใน modal ต้องมี "ยกเลิก" และ "บันทึก"** (ดู `EditProfileForm`): ไม่บันทึกอะไรจนกว่าจะกดบันทึก (รูปที่เลือกเป็นแค่ preview), ปุ่มบันทึกกดไม่ได้จนกว่าจะมีการแก้ไข และ ยกเลิก / ✕ / Esc / คลิกฉากหลัง ปิดโดยไม่บันทึก
+
+### Motion และวัสดุ
+| Class / ตัวแปร | ใช้ทำอะไร |
+|---|---|
+| `.press` | ปุ่ม/ลิงก์ย่อลง `scale(0.985)` ตอนกด (transform เท่านั้น) |
+| `--ease-settle` | easing แบบสปริงไม่เด้งเกิน ใช้กับ `.press` และ modal |
+| `.glass-card` | แถบลอย/ปุ่มลอยแบบโปร่งแสง (`backdrop-filter`) |
+| `.modal-backdrop`, `.modal-panel` | animation เปิด modal |
+| `.brand-spin` | โลโก้หมุนตอนโหลด |
+
+ทุกตัวมีทางเลือกเมื่อผู้ใช้ตั้ง `prefers-reduced-motion` (ไม่ย่อ/ไม่หมุน เหลือแค่ fade/pulse) และ `prefers-reduced-transparency` (`.glass-card` เป็นสีทึบ) ของใหม่ต้องทำตามแบบนี้
+
+### Boot splash
+`BootSplash` (`components/boot-splash.jsx`) อยู่ใน HTML แรกแต่**ซ่อนไว้** CSS (`.boot-splash` ใน `globals.css`) จะแสดงโลโก้หมุนก็ต่อเมื่อผ่านไป 1 วินาทีแล้วหน้ายังรอ JavaScript อยู่ เมื่อ React ทำงาน splash จะหายทันที หรือ fade ออก 300ms ถ้าแสดงไปแล้ว (`.is-leaving`) ถ้าปิด JavaScript `<noscript>` ใน layout จะซ่อนให้ หน้าที่โหลดเร็วจึงไม่เห็น splash เลย
+
+### รูปทรงและ layout
+- การ์ด/กล่องหลัก `rounded-3xl border border-line bg-card` · รายการใน feed คั่นด้วย `divide-y divide-line` ไม่ใช่การ์ดแยกใบ
+- ปุ่ม `rounded-full` (pill) หรือ `rounded-2xl`, chip `rounded-full`
+- การ์ดตี้เป็นแบบโพสต์: avatar host ซ้าย, ชื่อ host + วิธีเข้าร่วม, ชื่อตี้, วันเวลา, สถานที่, แถบที่นั่ง, สถานะ (จบแล้ว/เต็มแล้ว/เริ่มแล้ว) และแถบ "ชนเวลากับ …" ใต้ลิงก์
+- `<main className="flex w-full flex-1 flex-col">` ภายในคอลัมน์ของ `AppShell` (ไม่ต้องใส่ `max-w` เอง) ใส่ `<h1 className="sr-only">` เมื่อชื่อหน้าแสดงโดย shell แล้ว
 
 ### Component
 - **Server Component เป็นค่าเริ่มต้น** ใส่ `"use client"` เฉพาะ component ที่มี state, event หรือ Realtime และทำให้เล็กที่สุด
@@ -630,7 +679,7 @@ export async function doSomething(partyId, input) {
   - ลงท้ายด้วย `Refs #<issue หรือ sub-issue>`
   - commit ละ 1 sub-issue หรือ 1 ขั้นของงาน
 - **PR:** เข้า branch หลักที่ทีมตกลง ใส่ `Closes #<issue>` และ `Closes #<sub-issue>` ทุกตัว พร้อมสรุปการทดสอบ
-- ไฟล์ส่วนตัวที่ไม่ commit: `Claude Plan.md`, `Report.md` ตอนนี้ ignore ไว้แค่ใน `matee/.gitignore` ถ้าวางไว้ที่ root ของ repo จะยังขึ้นเป็น untracked ระวังอย่า `git add .` ที่ root
+- ไฟล์ทำงานที่ไม่ commit อยู่ใน `matee/` และ ignore ด้วย `matee/.gitignore`: `Claude Plan.md`, `Report.md`, `QA.md`, `Claude-QA.md` ถ้าวางไว้ที่ root ของ repo จะขึ้นเป็น untracked
 - ก่อนเปิด PR:
   - rebase หรือ merge branch หลักล่าสุด
   - lint และ build ต้องผ่าน
@@ -652,6 +701,7 @@ export async function doSomething(partyId, input) {
 - **ข้อมูลทดสอบ:** ชื่อตี้ขึ้นต้นด้วย `[TEST]`, ใช้วันที่ปี **2099** เพื่อไม่ให้ชนกับข้อมูลจริง และ**ลบทิ้งใน `finally` ทุกครั้ง**
 - ทดสอบกรณีตี้จบแล้วหรือแชทหมดอายุ: host แก้ `event_date` ของตี้ทดสอบเป็นอดีต (RLS อนุญาต owner)
 - ทดสอบ Realtime: subscribe จาก node แล้ว**รอ 3–4 วินาที**หลัง `SUBSCRIBED` ก่อนส่งข้อมูล
+- ถ่ายภาพหน้าจอด้วย browser แบบ headless: ค่าในฟอร์ม react-hook-form อาจยังว่างถ้าถ่ายก่อน hydrate และถ้าหน้าโหลดเกิน 1 วินาที `BootSplash` จะโผล่ ถ้าต้องการให้ซ่อน ให้ซ่อน `#boot-splash` ใน profile ของ browser ที่ใช้ทดสอบ (เช่น `userContent.css` ของ Firefox) โดยไม่แก้โค้ดแอป
 
 **Logic ล้วน** (`time.js`, `expiry.js`, `access.js`, `member-state.js`, `findConflict`, `my-party.js`) ทดสอบด้วย `node` ตรงๆ ได้ เพราะไม่มี dependency ฝั่ง server
 
@@ -691,14 +741,16 @@ npm run dev          # http://localhost:3000
 
 ## 19. สถานะงานและ Known issues
 
-### สถานะ issue (ณ 2026-10-08)
+### สถานะ issue (ณ 2026-10-09)
 | Issue | เรื่อง | สถานะ |
 |---|---|---|
 | #1, #2 | scaffold, schema | ✅ ปิดแล้ว |
-| #3 | register/login/session/avatar | ✅ โค้ดอยู่ใน branch 5/6 แล้ว (issue ยังเปิด) |
-| #4 | create, feed, detail | ✅ โค้ดมีแล้ว (`/categories` อยู่บน branch 22) |
-| #5 | live chat + หมดอายุ 7 วัน | ✅ branch `5-...` (ยังไม่ PR) |
-| #6 | join/leave/approve/time conflict | ✅ branch `6-...` (ยังไม่ PR) |
+| #3 | register/login/session/avatar | ✅ merge เข้า `development` แล้ว (PR #47) |
+| #4 | create, feed, detail | ✅ อยู่ใน `development` ค้นหา/หมวดย้ายไป `/search` (PR #49) ส่วน `/categories` อยู่บน branch 22 |
+| #5 | live chat + หมดอายุ 7 วัน | ✅ merge เข้า `development` แล้ว (PR #48) |
+| #6 | join/leave/approve/time conflict + QA รอบ 1–2 | ✅ merge เข้า `development` แล้ว (PR #48) |
+| – | Restyle แบบ Threads (sidebar, `/search`, modal, โปรไฟล์, โลโก้, splash) | ✅ merge เข้า `development` แล้ว (PR #49) |
+| – | ธีมขาวดำ (`light-dark()`) | ✅ merge เข้า `development` แล้ว (PR #50) |
 | #7 (+#22, #23, #24) | admin + moderation | 🌿 branch `22-...` / `7-...` |
 | #8 | จำนวนคน live บนการ์ด | ⏳ (ใช้แพทเทิร์นในหัวข้อ 13) |
 | #9 | deploy Vercel + smoke test | ⏳ |
@@ -706,13 +758,19 @@ npm run dev          # http://localhost:3000
 ### Known issues / หนี้ทางเทคนิค
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
-3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
-4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม Lagoon Sunset (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
-5. ~~`app/layout.jsx` มี `console.log` ทุก request~~ ลบแล้ว 2026-10-09 แต่ตอนนี้ layout เรียก `getUser()` + profile สำหรับ header ทำให้ 1 request ล็อกอินเรียก Supabase Auth 3 ครั้ง (middleware, layout, page) ดู `Claude-QA.md` ข้อ U-1 สำหรับแนวทางลด
-6. หน้า `/party/[id]` มีลิงก์ "ตี้อื่นในหมวด" ไป `/?category=` ซึ่งยังใช้ได้ แต่ถ้า `/categories` กลับมา (branch 22) ควรทบทวน
+3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** ~~avatar/profile~~ แก้แล้ว 2026-10-09 (ใช้ `fail()` จาก `lib/action-result.js` เหมือน party/chat) เหลือ admin ใช้ `{ ok:false, error }` รอทำหลัง branch 22 merge
+4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
+5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
+6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)
 9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
+
+10. ~~Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม~~ แก้แล้ว: แสดงเฉพาะเมื่อโหลดเกิน 1 วินาที (เดิม: อย่างน้อย 0.7 วินาทีทุกครั้ง)
+11. ~~มือถือ: guest ไม่มีที่เปลี่ยนธีม~~ แก้แล้ว: แถบบนมือถือของหน้า `/` มีเมนู ≡ (หน้าอื่นบนมือถือยังไม่มีแถบบน)
+12. ~~`EditProfileForm` เรียก `router.back()` เสมอ~~ แก้แล้ว: modal ที่เปิดจาก URL ตรงส่ง `closeHref="/account"` ต่อไปถึงฟอร์ม
+13. ~~`Modal` ไม่ขัง focus~~ แก้แล้ว: เนื้อหาข้างหลังเป็น `inert` ตอน modal เปิด
+14. ~~ปุ่ม "เข้าสู่ระบบ" บนแถบบนมือถือตัด 2 บรรทัด~~ แก้แล้ว (`whitespace-nowrap`)
 
 ---
 
@@ -726,12 +784,14 @@ npm run dev          # http://localhost:3000
 
 ระหว่างเขียน
 - [ ] อ่านใน Server Component, เขียนใน Server Action (`"use server"`)
-- [ ] ทุก action: ตรวจ input → `getUser()` → ตรวจสิทธิ์ → เขียน → แปลง error → `revalidatePath` → คืน `{ ok, code, message }`
+- [ ] ทุก action: ตรวจ input → `getUser()` → ตรวจสิทธิ์ → เขียน → แปลง error → `revalidatePath` → คืน `{ ok: true, ... }` หรือ `fail(code, message)` จาก `lib/action-result.js`
 - [ ] ข้อความ UI เป็นภาษาไทยตามหัวข้อ 10.6 และ 14
 - [ ] ใช้ design tokens ไม่ hard-code สี
 - [ ] เวลาใช้ helper ใน `time.js` (Asia/Bangkok) เสมอ
 - [ ] ไม่แก้ไฟล์ของ feature อื่นที่เพื่อนรับผิดชอบโดยไม่จำเป็น เช่น auth หรือ admin
 - [ ] ไม่เพิ่ม dependency และไม่ใช้ service role key
+- [ ] หน้าใหม่: ใช้ `<main className="flex w-full flex-1 flex-col">` ภายใน `AppShell` ถ้าเป็นหน้าเต็มจอ (ไม่มี sidebar) ให้เพิ่มใน `BARE_PATHS` และถ้าเป็นหน้าหลักให้เพิ่มลิงก์ใน `links` ของ `site-header.jsx`
+- [ ] ฟอร์มที่ควรเปิดทับหน้าเดิม: ทำเป็น modal ตามหัวข้อ 14 (ครบ 4 ไฟล์) และปุ่ม/ลิงก์ใหม่ใส่ class `press`
 
 ก่อนจบงาน
 - [ ] `npm run lint` และ `npm run build` ผ่าน

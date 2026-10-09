@@ -235,7 +235,7 @@ export function PartyForm({
           {PARTY_CATEGORIES.map((item) => (
             <label
               key={item.value}
-              className="press shrink-0 cursor-pointer whitespace-nowrap rounded-full border border-line px-3.5 py-1.5 text-sm font-medium text-muted has-[:checked]:border-foreground has-[:checked]:bg-foreground has-[:checked]:text-background has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+              className="press shrink-0 cursor-pointer whitespace-nowrap rounded-full border border-line px-3.5 py-1.5 text-sm font-medium text-muted has-[:checked]:border-brand has-[:checked]:bg-brand-soft has-[:checked]:font-semibold has-[:checked]:text-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
             >
               <input
                 type="radio"
@@ -404,7 +404,7 @@ export function PartyForm({
           {JOIN_MODES.map((joinMode) => (
             <label
               key={joinMode.value}
-              className="press grid cursor-pointer gap-0.5 rounded-xl px-3 py-2.5 text-center has-[:checked]:border has-[:checked]:border-line has-[:checked]:bg-card has-[:checked]:shadow-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent"
+              className="press grid cursor-pointer gap-0.5 rounded-xl px-3 py-2.5 text-center has-[:checked]:border has-[:checked]:border-brand has-[:checked]:bg-brand-soft has-[:checked]:shadow-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent"
             >
               <input type="radio" value={joinMode.value} className="sr-only" {...register("joinMode")} />
               <span className="text-sm font-semibold">{joinMode.label}</span>
@@ -414,7 +414,7 @@ export function PartyForm({
         </div>
         {mode === "edit" ? (
           <p className="text-xs text-muted">
-            เปลี่ยนเป็น “เข้าได้เลย” แล้ว คำขอที่ค้างอยู่ยังรอคุณยืนยันหรือปฏิเสธเหมือนเดิม
+            เปลี่ยนเป็น “เข้าได้ทันที” แล้ว คำขอที่ค้างอยู่ยังรอคุณยืนยันหรือปฏิเสธเหมือนเดิม
           </p>
         ) : null}
         <FieldError message={errors.joinMode?.message} />
@@ -454,7 +454,7 @@ export function PartyForm({
         <button
           type="submit"
           disabled={isPending || !canSubmit}
-          className="press rounded-full bg-foreground px-6 py-2.5 text-sm font-semibold text-background disabled:opacity-40"
+          className="press rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-brand-foreground disabled:opacity-40"
         >
           {isPending ? pendingLabel : submitLabel}
         </button>

@@ -4,7 +4,7 @@ import { Modal } from "@/components/ui/modal";
 export default function EditProfileModalDirect() {
   return (
     <Modal title="แก้ไขโปรไฟล์" closeHref="/account">
-      <EditProfile />
+      <EditProfile closeHref="/account" />
     </Modal>
   );
 }

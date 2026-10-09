@@ -50,7 +50,7 @@ export function AppShell({ account, theme, children }) {
         <Link
           href="/create"
           aria-label="ตั้งตี้ใหม่"
-          className="press glass-card fixed right-4 bottom-28 z-10 grid size-14 place-items-center rounded-2xl border border-line text-foreground shadow-lg md:right-8 md:bottom-8"
+          className="press fixed right-4 bottom-28 z-10 grid size-14 place-items-center rounded-2xl bg-brand text-brand-foreground shadow-lg md:right-8 md:bottom-8"
         >
           <svg
             aria-hidden="true"
@@ -74,7 +74,7 @@ export function AppShell({ account, theme, children }) {
             </p>
             <Link
               href="/login"
-              className="press rounded-full bg-foreground px-4 py-2.5 text-center text-sm font-semibold text-background"
+              className="press rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-brand-foreground"
             >
               เข้าสู่ระบบ
             </Link>

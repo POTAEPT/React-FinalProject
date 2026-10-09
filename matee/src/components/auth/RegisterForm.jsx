@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import {
   AuthDivider,
@@ -13,7 +12,6 @@ import {
 import { signUp } from "@/lib/auth/actions";
 
 export default function RegisterForm() {
-  const router = useRouter();
   const [form, setForm] = useState({
     displayName: "",
     email: "",
@@ -50,8 +48,9 @@ export default function RegisterForm() {
       return;
     }
 
-    router.push("/account");
-    router.refresh();
+    // Full load for the same reason as LoginForm: /register redirects
+    // signed-in users, so push + refresh could race.
+    window.location.replace("/account");
   }
 
   return (

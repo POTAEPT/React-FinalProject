@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { categoryLabel } from "@/lib/parties/categories";
 import { listMyMemberships } from "@/lib/parties/my-commitments";
 import { groupMyParties, myPartyBadge } from "@/lib/parties/my-party";
@@ -32,7 +33,7 @@ function GearIcon() {
 
 const badgeTone = {
   danger: "border border-danger-line bg-danger-bg text-danger",
-  highlight: "border border-foreground text-foreground",
+  highlight: "bg-highlight text-highlight-foreground",
   muted: "border border-line text-muted",
 };
 
@@ -60,12 +61,16 @@ function PartyRow({ item, pendingCount }) {
         </span>
       </Link>
       <span className="flex shrink-0 items-center gap-2">
-        <Link
-          href={`/party/${item.partyId}#chat`}
-          className="rounded-full border border-line px-3 py-1 text-sm"
-        >
-          แชท
-        </Link>
+        {/* After leaving, the chat is closed to this user, so the link would
+            only lead to "คุณออกจากตี้แล้ว". A cancelled party keeps its chat. */}
+        {item.status === "cancelled" ? null : (
+          <Link
+            href={`/party/${item.partyId}#chat`}
+            className="rounded-full border border-line px-3 py-1 text-sm"
+          >
+            แชท
+          </Link>
+        )}
         {item.isHost ? (
           <Link
             href={`/manage/${item.partyId}`}
@@ -119,14 +124,13 @@ export default async function MyPartyPage() {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login?next=/my-party");
   }
+
+  const supabase = await createClient();
 
   const memberships = await listMyMemberships(supabase, user.id);
   const hostedIds = memberships.filter((item) => item.isHost).map((item) => item.partyId);

@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'โปรไฟล์ | MaTee' }
 
+const ROLE_LABELS = { user: 'ผู้ใช้', admin: 'ผู้ดูแลระบบ' }
+
 const TABS = [
   { value: 'hosted', label: 'ตี้ที่ตั้ง', empty: 'ยังไม่ได้ตั้งตี้' },
   { value: 'joined', label: 'ตี้ที่เข้าร่วม', empty: 'ยังไม่ได้เข้าร่วมตี้ไหน' },
@@ -90,7 +92,7 @@ export default async function AccountPage({ searchParams }) {
             <p className="truncate text-sm text-muted">{user.email}</p>
             <p>
               <span className="rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-soft-foreground">
-                {profile.role}
+                {ROLE_LABELS[profile.role] ?? profile.role}
               </span>
             </p>
           </div>

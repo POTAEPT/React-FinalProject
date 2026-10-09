@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { fail } from "@/lib/action-result";
 import { chatState } from "@/lib/chat/expiry";
 import { messageColumns, toMessage } from "@/lib/chat/message";
 import { createClient } from "@/lib/supabase/server";
@@ -14,10 +15,6 @@ const messageSchema = z
   .trim()
   .min(1, "พิมพ์ข้อความก่อนส่ง")
   .max(500, "ข้อความยาวได้ไม่เกิน 500 ตัวอักษร");
-
-function fail(code, message) {
-  return { ok: false, code, message };
-}
 
 // Sends a message as the signed-in user. Only pending or confirmed members may
 // send, and only until the chat expires; the insert policy enforces the same

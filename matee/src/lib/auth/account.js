@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,14 +12,13 @@ export const loadAccount = cache(async () => {
   }
 
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return null;
     }
+
+    const supabase = await createClient();
 
     const { data: profile } = await supabase
       .from("profiles")
