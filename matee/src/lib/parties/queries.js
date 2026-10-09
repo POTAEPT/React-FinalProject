@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getMyCommitments } from "@/lib/parties/my-commitments";
 import { partyEndMs, partyStartMs } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -124,19 +125,21 @@ export async function listParties({
     query = query.lte("event_date", before);
   }
 
-  const { data, error } = await query;
+  // The user lookup (cached per request) runs alongside the parties query.
+  const [{ data, error }, user] = await Promise.all([query, getCurrentUser()]);
 
   if (error) {
     console.error("list parties", error.message);
     return { ok: false, reason: "query", parties: [] };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const commitments = user ? await getMyCommitments(supabase, user.id) : [];
+  // Hosts and counts do not depend on the viewer's commitments; load both at once.
+  const [related, commitments] = await Promise.all([
+    loadRelated(supabase, data ?? []),
+    user ? getMyCommitments(supabase, user.id) : [],
+  ]);
 
-  const parties = (await loadRelated(supabase, data ?? [])).filter((party) => {
+  const parties = related.filter((party) => {
     if (party.hostBanned) {
       return false;
     }
@@ -198,14 +201,13 @@ export async function getViewerMembership(partyId) {
     return empty;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     return empty;
   }
+
+  const supabase = await createClient();
 
   const [membershipResult, commitments] = await Promise.all([
     supabase

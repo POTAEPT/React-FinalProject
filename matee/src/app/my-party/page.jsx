@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { categoryLabel } from "@/lib/parties/categories";
 import { listMyMemberships } from "@/lib/parties/my-commitments";
 import { groupMyParties, myPartyBadge } from "@/lib/parties/my-party";
@@ -123,14 +124,13 @@ export default async function MyPartyPage() {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login?next=/my-party");
   }
+
+  const supabase = await createClient();
 
   const memberships = await listMyMemberships(supabase, user.id);
   const hostedIds = memberships.filter((item) => item.isHost).map((item) => item.partyId);

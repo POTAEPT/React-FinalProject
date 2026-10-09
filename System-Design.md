@@ -231,9 +231,10 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 ### Session ฝั่ง server
 | ต้องการ | ใช้ | เหตุผล |
 |---|---|---|
-| รู้ว่าใครเรียก ใน Server Action หรือ Server Component | `const { data: { user } } = await supabase.auth.getUser()` | ตรวจ token กับ Supabase Auth จึงเชื่อถือได้ ใช้เป็นมาตรฐาน |
+| รู้ว่าใครเรียก ใน Server Component (page, layout, query ใน `lib/*/queries.js`) | `await getCurrentUser()` จาก `lib/auth/current-user.js` | `getUser()` ห่อด้วย `cache()` ของ React ทั้ง layout, page และ query ใน request เดียวกันจึงตรวจ token กับ Supabase Auth ครั้งเดียว คืน `null` สำหรับ guest |
+| รู้ว่าใครเรียก ใน Server Action | `const { data: { user } } = await supabase.auth.getUser()` | `cache()` ไม่มีผลใน Server Action จึงเรียกเองทุก action ตรวจ token กับ Supabase Auth จึงเชื่อถือได้ |
 | ต้องการ claims ของ JWT + profile (`/account`, `/account/edit`) | `getSession()` จาก `lib/auth/get-session.js` | ตรวจลายเซ็น JWT กับ JWKS ด้วย `jose` แล้วโหลด profile (ต้องตั้ง JWT Signing Keys เป็นแบบ asymmetric) |
-| ชื่อ + avatar ของคนที่ล็อกอิน (shell, composer, ฟอร์มตั้งตี้) | `loadAccount()` จาก `lib/auth/account.js` | ห่อด้วย `cache()` ของ React layout และ page ใน request เดียวกันจึงเรียก Supabase ครั้งเดียว คืน `null` สำหรับ guest |
+| ชื่อ + avatar ของคนที่ล็อกอิน (shell, composer, ฟอร์มตั้งตี้) | `loadAccount()` จาก `lib/auth/account.js` | ใช้ `getCurrentUser()` แล้วโหลด profile ห่อด้วย `cache()` เหมือนกัน คืน `null` สำหรับ guest |
 | **ห้ามใช้** | `supabase.auth.getSession()` เพื่อตัดสินสิทธิ์ | อ่าน cookie ตรงๆ โดยไม่ตรวจ ปลอมได้ |
 
 ### middleware.js (ทุก request ยกเว้นไฟล์ static)
@@ -758,7 +759,7 @@ npm run dev          # http://localhost:3000
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
-5. **`getUser()` ซ้ำใน 1 request:** layout กับ page ใช้ `loadAccount()` (cache) ร่วมกันแล้ว แต่ middleware และ `getViewerMembership`/`CreateParty` ยังเรียก `getUser()` ของตัวเอง หน้าที่ล็อกอินจึงช้ากว่าหน้า guest ราว 2 เท่า แนวทางลด: ใช้ user จาก `cache()` ตัวเดียวทั้ง request และใช้ `getClaims()` ใน middleware (ดู `matee/Claude-QA.md` U-1, N-6)
+5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)

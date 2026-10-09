@@ -1,9 +1,9 @@
 import { loadAccount } from "@/lib/auth/account";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { createParty } from "@/app/create/actions";
 import { PartyForm } from "@/components/party/PartyForm";
 import { addDays, bangkokToday } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
 
 // The create-party form with its env and sign-in guards. Shared by the
 // /create page and the modal that intercepts it, so there is one form.
@@ -18,17 +18,7 @@ export async function CreateParty() {
     );
   }
 
-  let user = null;
-
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch (error) {
-    console.error("create page session", error);
-
-    return <p className="px-4 py-6 text-sm">เชื่อมต่อบัญชีไม่สำเร็จ</p>;
-  }
+  const user = await getCurrentUser();
 
   if (!user) {
     return (
