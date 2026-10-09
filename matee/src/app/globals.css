@@ -1,36 +1,92 @@
 @import "tailwindcss";
 
+/*
+ * "Lagoon Sunset" theme. Values and contrast notes: System-Design.md, section 14.
+ * brand (#359FA0) is for surfaces, stripes and icons only: as text or a focus
+ * ring on cream it falls below WCAG contrast, so focus rings use accent.
+ */
 :root {
-  --background: #f4f0e8;
-  --foreground: #1c1917;
-  --card: #fffdf8;
-  --muted: #78716c;
-  --line: #e6dfd2;
-  --accent: #0f6e56;
-  --accent-foreground: #f7fbf9;
+  --background: #fff0c5;
+  --card: #fff9e3;
+  --foreground: #17383a;
+  --muted: #4a6b6c;
+  --line: #e6d5a3;
+  --accent: #1f7173;
+  --accent-foreground: #ffffff;
+  --brand: #359fa0;
+  --soft: #8ad6d1;
+  --soft-foreground: #17383a;
+  --highlight: #ff8c52;
+  --highlight-foreground: #17383a;
+  --danger: #9a2b1c;
+  --danger-foreground: #ffffff;
+  --danger-bg: #fde9e2;
+  --danger-line: #f2b8a5;
+  /* Native date pickers and scrollbars follow the active scheme. */
+  color-scheme: light;
+}
+
+/*
+ * Dark tokens apply when the viewer picked dark in the theme menu
+ * (data-theme="dark" on <html>, see app/layout.jsx), or follows the system
+ * and the system is dark. Keep the two blocks identical.
+ */
+:root[data-theme="dark"] {
+  --background: #0f2627;
+  --card: #163535;
+  --foreground: #fff0c5;
+  --muted: #9fbfbd;
+  --line: #2a4f4f;
+  --accent: #8ad6d1;
+  --accent-foreground: #0f2627;
+  --soft: #1f4f4f;
+  --soft-foreground: #8ad6d1;
+  --highlight-foreground: #0f2627;
+  --danger: #ffb4a2;
+  --danger-foreground: #0f2627;
+  --danger-bg: #3a1e1a;
+  --danger-line: #7a3a2e;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0f2627;
+    --card: #163535;
+    --foreground: #fff0c5;
+    --muted: #9fbfbd;
+    --line: #2a4f4f;
+    --accent: #8ad6d1;
+    --accent-foreground: #0f2627;
+    --soft: #1f4f4f;
+    --soft-foreground: #8ad6d1;
+    --highlight-foreground: #0f2627;
+    --danger: #ffb4a2;
+    --danger-foreground: #0f2627;
+    --danger-bg: #3a1e1a;
+    --danger-line: #7a3a2e;
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-brand: var(--brand);
+  --color-soft: var(--soft);
+  --color-soft-foreground: var(--soft-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-line: var(--danger-line);
   --font-sans: var(--font-thai);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #141210;
-    --foreground: #f5f0e8;
-    --card: #1e1b18;
-    --muted: #a8a29e;
-    --line: #3a342c;
-    --accent: #3dd6a5;
-    --accent-foreground: #05281d;
-  }
 }
 
 body {

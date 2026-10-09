@@ -861,7 +861,7 @@ values (
   2097152, -- 2 MB limit
   array['image/jpeg', 'image/png', 'image/webp']
 )
-on conflict (id) update 
+on conflict (id) do update 
 set file_size_limit = 2097152, 
     allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
 

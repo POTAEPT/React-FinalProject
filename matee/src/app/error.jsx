@@ -9,17 +9,18 @@ export default function GlobalError({ error, reset }) {
   }, [error])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 px-4 text-center">
+    <main className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-12 text-center">
+      <h1 className="text-2xl font-semibold">เกิดข้อผิดพลาด</h1>
 
-      <p className="text-sm text-red-500 max-w-lg mb-6 bg-white p-4 rounded-lg border border-red-200 overflow-auto text-left">
+      <p role="alert" className="max-w-lg overflow-auto rounded-xl border border-danger-line bg-danger-bg p-4 text-left text-sm text-danger">
         {error.message || 'Unknown Error'}
       </p>
       <button
         onClick={() => reset()}
-        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        className="rounded-xl bg-accent px-6 py-2.5 text-sm font-medium text-accent-foreground transition hover:opacity-90"
       >
         ลองใหม่อีกครั้ง
       </button>
-    </div>
+    </main>
   )
 }

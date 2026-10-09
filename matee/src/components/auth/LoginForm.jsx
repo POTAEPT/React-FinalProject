@@ -6,6 +6,7 @@ import { signIn } from '@/lib/auth/actions'
 import FormField from '@/components/ui/FormField'
 import Button from '@/components/ui/Button'
 import AlertMessage from '@/components/ui/AlertMessage'
+import { safeNextPath } from '@/lib/auth/next-path'
 
 /**
  * อธิบาย: Component สำหรับฟอร์มเข้าสู่ระบบ
@@ -14,7 +15,7 @@ import AlertMessage from '@/components/ui/AlertMessage'
 export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') || '/'
+  const nextPath = safeNextPath(searchParams.get('next'))
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -46,7 +47,7 @@ export default function LoginForm() {
 
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-line bg-card p-8 shadow-sm">
+      <section className="w-full max-w-md rounded-2xl border border-t-4 border-line border-t-brand bg-card p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">เข้าสู่ระบบ</h1>
         <p className="mt-2 text-sm text-muted">
           เข้าสู่บัญชีเพื่อเริ่มใช้งาน MaTee
@@ -62,7 +63,7 @@ export default function LoginForm() {
               onChange={handleChange}
               autoComplete="email"
               required
-              className="rounded-lg border border-line bg-background px-3 py-2"
+              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
 
@@ -75,12 +76,12 @@ export default function LoginForm() {
               onChange={handleChange}
               autoComplete="current-password"
               required
-              className="rounded-lg border border-line bg-background px-3 py-2"
+              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
               {error}
             </p>
           ) : null}
@@ -88,7 +89,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-accent px-4 py-2 font-medium text-accent-foreground disabled:opacity-60"
+            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
           >
             {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>

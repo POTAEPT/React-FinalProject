@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PartyChatSection } from "@/components/chat/PartyChatSection";
+import { JoinButton } from "@/components/party/JoinButton";
 import {
   categoryLabel,
   joinModeLabel,
 } from "@/lib/parties/categories";
-import { getParty } from "@/lib/parties/queries";
+import { memberActionState } from "@/lib/parties/member-state";
+import { getParty, getViewerMembership } from "@/lib/parties/queries";
 import {
   formatDuration,
   formatEventDate,
@@ -51,7 +54,7 @@ export default async function PartyPage({ params }) {
     notFound();
   }
 
-  const result = await getParty(id);
+  const [result, viewer] = await Promise.all([getParty(id), getViewerMembership(id)]);
 
   if (!result.ok && result.reason === "unconfigured") {
     return (
@@ -75,6 +78,7 @@ export default async function PartyPage({ params }) {
 
   const party = result.party;
   const slots = `${party.confirmedCount}/${party.maxMembers}`;
+  const actionState = memberActionState(party, viewer);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
@@ -82,8 +86,13 @@ export default async function PartyPage({ params }) {
         กลับไปหาตี้
       </Link>
       <article className="grid gap-6 rounded-2xl border border-line bg-card p-5 sm:p-6">
+        {party.status === "cancelled" ? (
+          <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
+            เจ้าของตี้ยกเลิกตี้นี้แล้ว
+          </p>
+        ) : null}
         <div className="grid gap-2">
-          <p className="text-sm font-medium text-accent">
+          <p className="w-fit rounded-full bg-soft px-2.5 py-0.5 text-xs font-medium text-soft-foreground">
             {categoryLabel(party.category, party.customCategory)}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">{party.title}</h1>
@@ -123,6 +132,7 @@ export default async function PartyPage({ params }) {
             </div>
           ) : null}
         </dl>
+        <JoinButton partyId={party.id} state={actionState} />
         {party.detail ? (
           <p className="whitespace-pre-wrap text-sm leading-7">{party.detail}</p>
         ) : (
@@ -135,6 +145,7 @@ export default async function PartyPage({ params }) {
           ตี้อื่นในหมวด {categoryLabel(party.category)}
         </Link>
       </article>
+      <PartyChatSection party={party} viewer={viewer} />
     </main>
   );
 }

@@ -50,7 +50,7 @@ export default function RegisterForm() {
 
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-line bg-card p-8 shadow-sm">
+      <section className="w-full max-w-md rounded-2xl border border-t-4 border-line border-t-brand bg-card p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">สมัครสมาชิก</h1>
         <p className="mt-2 text-sm text-muted">
           สร้างบัญชีเพื่อเริ่มใช้งาน MaTee
@@ -65,7 +65,7 @@ export default function RegisterForm() {
               onChange={handleChange}
               maxLength={40}
               required
-              className="rounded-lg border border-line bg-background px-3 py-2"
+              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
 
@@ -77,7 +77,7 @@ export default function RegisterForm() {
               value={form.email}
               onChange={handleChange}
               required
-              className="rounded-lg border border-line bg-background px-3 py-2"
+              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
 
@@ -90,17 +90,17 @@ export default function RegisterForm() {
               onChange={handleChange}
               minLength={8}
               required
-              className="rounded-lg border border-line bg-background px-3 py-2"
+              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             />
           </label>
 
           {error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
               {error}
             </p>
           ) : null}
           {notice ? (
-            <p role="status" className="text-sm text-accent">
+            <p role="status" className="rounded-xl bg-soft px-3 py-2 text-sm text-soft-foreground">
               {notice}
             </p>
           ) : null}
@@ -108,7 +108,7 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-accent px-4 py-2 font-medium text-accent-foreground disabled:opacity-60"
+            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
           >
             {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
           </button>
