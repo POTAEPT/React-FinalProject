@@ -10,8 +10,11 @@ import { getSupabaseEnv } from './env'
  * 2. JWT มีวันหมดอายุ (มักจะ 1 ชั่วโมง)
  * 3. เมื่อ User เปิดหน้าเว็บ request จะวิ่งผ่าน Proxy ก่อน
  * 4. เราสร้าง Supabase Client ขึ้นมา และดึงค่าจาก Cookie
- * 5. เมื่อเราเรียก `supabase.auth.getUser()` ตัว @supabase/ssr จะตรวจสอบ Token
+ * 5. เมื่อเราเรียก `supabase.auth.getClaims()` ตัว @supabase/ssr จะตรวจสอบ Token
  *    ถ้า Token ใกล้หมดอายุ มันจะขอ Token ใหม่ให้ทันที
+ *    โปรเจกต์ใช้ key แบบ asymmetric (ES256) จึงตรวจลายเซ็นในเครื่องด้วย public key
+ *    (JWKS เก็บ cache ไว้ 10 นาที) ไม่ต้องถาม Supabase Auth ทุก request แบบ `getUser()`
+ *    คืน `userId` (claims.sub) พอสำหรับกัน route ส่วนหน้าเว็บยังใช้ `getUser()` ผ่าน `getCurrentUser()`
  * 6. สุดท้ายเรานำ Token ใหม่ (ถ้ามี) ไปแนบใส่ `supabaseResponse` เพื่อส่ง Cookie ใหม่กลับไปให้เบราว์เซอร์
  */
 export async function updateSession(request) {
@@ -22,7 +25,7 @@ export async function updateSession(request) {
   })
 
   const env = getSupabaseEnv()
-  if (!env) return { supabaseResponse, user: null }
+  if (!env) return { supabaseResponse, userId: null }
 
   const supabase = createServerClient(
     env.url,
@@ -49,8 +52,9 @@ export async function updateSession(request) {
     }
   )
 
-  // ดึงข้อมูล User จาก Token ปัจจุบัน (และ refresh ให้อัตโนมัติถ้าใกล้หมดอายุ)
-  const { data: { user } } = await supabase.auth.getUser()
+  // ตรวจ Token ปัจจุบัน (และ refresh ให้อัตโนมัติถ้าใกล้หมดอายุ) token ไม่ถูกต้องหรือ
+  // ไม่มี session จะได้ claims เป็น null
+  const { data } = await supabase.auth.getClaims()
 
-  return { supabaseResponse, user, supabase }
+  return { supabaseResponse, userId: data?.claims?.sub ?? null }
 }

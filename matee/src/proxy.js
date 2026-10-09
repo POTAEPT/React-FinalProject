@@ -22,13 +22,13 @@ export async function proxy(request) {
   const { pathname } = request.nextUrl
 
   // 1. ตรวจสอบและต่ออายุ Session
-  const { user, supabaseResponse } = await updateSession(request)
+  const { userId, supabaseResponse } = await updateSession(request)
 
   // 2. ตรวจสอบหน้าที่ห้ามเข้าถ้าไม่ได้ล็อกอิน
   const protectedPaths = ['/create', '/my-party', '/manage', '/account']
   const isProtected = protectedPaths.some(path => pathname.startsWith(path))
 
-  if (isProtected && !user) {
+  if (isProtected && !userId) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return redirectWithSession(loginUrl, supabaseResponse)
