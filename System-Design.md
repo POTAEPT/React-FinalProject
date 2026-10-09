@@ -690,7 +690,7 @@ npm run dev          # http://localhost:3000
 6. หน้า `/party/[id]` มีลิงก์ "ตี้อื่นในหมวด" ไป `/?category=` ซึ่งยังใช้ได้ แต่ถ้า `/categories` กลับมา (branch 22) ควรทบทวน
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)
-9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว และมี migration `supabase/migrations/20261009090000_drop_skips.sql` สำหรับ `drop table skips` **ที่ยังต้องรันบน Supabase** หลังจากแอปเวอร์ชันที่ไม่มี skip ขึ้นใช้งานแล้ว (migration เดิมยังมี `create table skips` อยู่ตามประวัติ ห้ามแก้)
+9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
 
 ---
 
