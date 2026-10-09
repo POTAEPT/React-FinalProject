@@ -3,7 +3,7 @@
 > เอกสารออกแบบระบบของ MaTee (มาตี้กัน) สำหรับทุกคนในทีมและ AI agent ที่เขียนโค้ดในโปรเจกต์นี้
 > เป้าหมายคือให้ทุกคนเขียนโค้ดไปในทางเดียวกัน: โครงสร้างไฟล์, รูปแบบ Server Action, การเช็คสิทธิ์, ข้อความ UI และวิธีทดสอบ
 >
-> **อัปเดตล่าสุด:** 2026-10-09 · อ้างอิงโค้ดบน branch `development` (มีงาน #3, #5, #6 และ PR #49 "Restyle the app like Threads") และงาน admin บน branch `22-sub-issue-1-admin-access-and-dashboard`
+> **อัปเดตล่าสุด:** 2026-10-09 · อ้างอิงโค้ดบน branch `development` (มีงาน #3, #5, #6, PR #49 "Restyle the app like Threads" และ PR #50 ธีมขาวดำ) และงาน admin บน branch `22-sub-issue-1-admin-access-and-dashboard`
 
 ## สารบัญ
 1. [วิธีใช้เอกสารนี้](#1-วิธีใช้เอกสารนี้)
@@ -514,101 +514,56 @@ export async function doSomething(partyId, input) {
 - ใช้คำว่า "ตี้" (ไม่ใช้ "ปาร์ตี้") และ "เจ้าของตี้" (ไม่ใช้ "โฮสต์") ให้สม่ำเสมอ
 - title ของหน้า: `"<ชื่อหน้า> | MaTee"`
 
-### Color theme: "Lagoon Sunset"
-พาเลตหลักจาก [Color Hunt](https://colorhunt.co/palette/8ad6d1359fa0fff0c5ff8c52) 4 สี: **Mint** `#8AD6D1` · **Teal** `#359FA0` · **Cream** `#FFF0C5` · **Orange** `#FF8C52`
-
-สีดิบของ Color Hunt ใช้เป็นตัวอักษรบนพื้นหลังอีกสีตรงๆ ไม่ได้ทุกคู่ (เช่น ขาวบน `#359FA0` ได้แค่ 3.17:1 ต่ำกว่า 4.5:1 ของ WCAG AA) จึงเพิ่มสีช่วย 3 ตัวที่ปรับเฉดจากพาเลตเดิม: **Ink** `#17383A` (ตัวอักษร), **Deep Teal** `#1F7173` (ปุ่ม/ลิงก์บนพื้นสว่าง), **Card** `#FFF9E3` (cream อ่อนลง)
-
-| บทบาท | สีดิบจาก Color Hunt | ใช้ที่ไหน |
-|---|---|---|
-| Mint | `#8AD6D1` | chip, พื้น badge, accent ใน dark mode |
-| Teal | `#359FA0` | โลโก้, ไอคอน, ลวดลายตกแต่ง (ไม่ใช้เป็นสีตัวอักษรหรือ focus ring) |
-| Cream | `#FFF0C5` | สีพื้นของ hover/ปุ่มที่เลือก (light), ตัวอักษรหลัก (dark) |
-| Orange | `#FF8C52` | ปุ่ม CTA รอง, badge pending, จุดเน้น (ตัวอักษรบนส้มต้องใช้ Ink) |
+### Color theme: Monochrome (ตั้งแต่ PR #50)
+ธีมเป็น**ขาว ดำ และเทา**เท่านั้น ยกเว้นชุด `danger` (error, ออกจากระบบ, ยกเลิก) ที่ยังเป็นสีแดงเพื่อให้คำเตือนยังดูเป็นคำเตือน ธีมเดิม "Lagoon Sunset" (Mint/Teal/Cream/Orange) เลิกใช้แล้ว ส่วนโลโก้แสดงเป็นสีเทา (`filter: grayscale(1)` บน `.brand-light`/`.brand-dark`)
 
 ### Design tokens (`src/app/globals.css`)
+token แต่ละตัว**เขียนครั้งเดียว**ด้วย `light-dark(ค่าสว่าง, ค่ามืด)` ฝั่งที่ใช้มาจาก `color-scheme` จึงไม่มี block มืดแยกให้ต้องคอยแก้ให้ตรงกันอีก
+
 | Token (Tailwind) | Light | Dark | ใช้กับ |
 |---|---|---|---|
-| `background` | `#FFF0C5` | `#0F2627` | พื้นของ hover, รายการที่เลือก, ช่องกรอก, ฟองแชทของคนอื่น (เข้มกว่า `card` เล็กน้อย) |
-| `card` | `#FFF9E3` | `#163535` | **พื้นหลังหน้า** (`body`) และคอลัมน์เนื้อหา, การ์ด, modal |
-| `foreground` | `#17383A` | `#FFF0C5` | ตัวอักษรหลัก |
-| `muted` | `#4A6B6C` | `#9FBFBD` | ตัวอักษรรอง |
-| `line` | `#E6D5A3` | `#2A4F4F` | เส้นขอบ |
-| `accent` + `accent-foreground` | `#1F7173` + `#FFFFFF` | `#8AD6D1` + `#0F2627` | ปุ่มหลัก, ลิงก์เด่น |
-| `brand` | `#359FA0` | `#359FA0` | ไอคอน, ลวดลายตกแต่ง (ห้ามใช้เป็นสีตัวอักษร) โลโก้ใช้ไฟล์รูปใน `public/brand/` |
-| `soft` + `soft-foreground` | `#8AD6D1` + `#17383A` | `#1F4F4F` + `#8AD6D1` | chip, หมวดหมู่, badge ทั่วไป |
-| `highlight` + `highlight-foreground` | `#FF8C52` + `#17383A` | `#FF8C52` + `#0F2627` | CTA รอง, badge pending, จุดเน้น |
-| `danger` / `danger-bg` / `danger-line` | `#9A2B1C` / `#FDE9E2` / `#F2B8A5` | `#FFB4A2` / `#3A1E1A` / `#7A3A2E` | error / แบนเนอร์ยกเลิก |
-| `danger-foreground` | `#FFFFFF` | `#0F2627` | ตัวอักษรบนปุ่ม `bg-danger` (เช่น ยกเลิกตี้) contrast 7.67 / 9.27 |
+| `card` | `#FFFFFF` | `#0A0A0A` | **พื้นหลังหน้า** (`body`) คอลัมน์เนื้อหา การ์ด modal |
+| `background` | `#F3F3F3` | `#1C1C1C` | พื้นของ hover, รายการที่เลือก, ช่องกรอก, ฟองแชทของคนอื่น (ต้องต่างจาก `card`) |
+| `foreground` | `#0A0A0A` | `#F5F5F5` | ตัวอักษรหลัก |
+| `muted` | `#6B6B6B` | `#A0A0A0` | ตัวอักษรรอง |
+| `line` | `#E2E2E2` | `#2E2E2E` | เส้นขอบ / เส้นคั่น |
+| `accent` + `accent-foreground` | `#0A0A0A` + `#FFFFFF` | `#F5F5F5` + `#0A0A0A` | ปุ่มหลัก, ลิงก์, focus ring (เท่ากับ `foreground`) |
+| `soft` + `soft-foreground` | `#ECECEC` + foreground | `#262626` + foreground | chip หมวด, avatar ตัวอักษร, สถานะรออนุมัติ, แถบประกาศ |
+| `brand`, `highlight` (+ `-foreground`) | = `accent` | = `accent` | **ชื่อเดิมที่ยังเก็บไว้ให้โค้ดเก่าใช้ได้** ใน monochrome มีค่าเท่า accent ของใหม่ไม่ควรใช้ |
+| `danger` / `danger-bg` / `danger-line` | `#B3261E` / `#FDECEA` / `#F3B9B4` | `#FF8A80` / `#2A1513` / `#6E3A35` | error, แบนเนอร์ยกเลิก, ออกจากระบบ |
+| `danger-foreground` | `#FFFFFF` | `#0A0A0A` | ตัวอักษรบนปุ่ม `bg-danger` |
 
-ค่า contrast ที่คำนวณแล้ว (เกณฑ์ WCAG AA: ตัวอักษรปกติ ≥ 4.5, ข้อความใหญ่/ไอคอน ≥ 3)
+**Contrast ที่คำนวณแล้ว** (เกณฑ์ WCAG AA: ตัวอักษร ≥ 4.5, เส้นขอบของ UI และ focus ≥ 3)
 
-| คู่สี | อัตราส่วน |
-|---|---|
-| foreground บน card (light, พื้นหน้าปัจจุบัน) | 11.97 |
-| foreground บน background (light) | 11.14 |
-| muted บน card (light) | 5.51 |
-| accent-foreground บน accent (light) | 5.73 |
-| ตัวอักษร Ink บน highlight | 5.49 |
-| ตัวอักษร Ink บน soft | 7.59 |
-| danger บน card (light) | 7.28 |
-| foreground บน card (dark, พื้นหน้าปัจจุบัน) | 11.61 |
-| foreground บน background (dark) | 13.96 |
-| background บน foreground (ปุ่ม `bg-foreground text-background`) | 11.14 / 13.96 |
-| muted บน card (dark) | 6.69 |
-| accent-foreground บน accent (dark) | 9.51 |
-| ตัวอักษร `#0F2627` บน highlight (dark) | 6.88 |
+| คู่สี | Light | Dark |
+|---|---|---|
+| foreground บน card | 19.80 | 18.16 |
+| muted บน card | 5.33 | 7.57 |
+| muted บน background (hover) | 4.80 | 6.52 |
+| muted บน soft (chip) | 4.51 (ใกล้เส้นพอดี ห้ามทำให้จางกว่านี้) | – |
+| foreground บน soft | 16.76 | 13.88 |
+| accent-foreground บน accent (ปุ่ม) | 19.80 | 18.16 |
+| danger บน card / บน danger-bg | 6.54 / 5.72 | 8.67 / 7.57 |
+| danger-foreground บน danger | 6.54 | 8.67 |
+| accent เป็น focus ring บน card | 19.80 | 18.16 |
+| line บน card | **1.30** | **1.46** |
 
-ตัวอย่างการประกาศ (Tailwind 4)
-```css
-:root {
-  --background: #fff0c5;  --card: #fff9e3;  --foreground: #17383a;
-  --muted: #4a6b6c;       --line: #e6d5a3;
-  --accent: #1f7173;      --accent-foreground: #ffffff;
-  --brand: #359fa0;
-  --soft: #8ad6d1;        --soft-foreground: #17383a;
-  --highlight: #ff8c52;   --highlight-foreground: #17383a;
-  --danger: #9a2b1c;      --danger-bg: #fde9e2;  --danger-line: #f2b8a5;
-  --danger-foreground: #ffffff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f2627; --card: #163535;     --foreground: #fff0c5;
-    --muted: #9fbfbd;      --line: #2a4f4f;
-    --accent: #8ad6d1;     --accent-foreground: #0f2627;
-    --soft: #1f4f4f;       --soft-foreground: #8ad6d1;
-    --highlight-foreground: #0f2627;
-    --danger: #ffb4a2;     --danger-bg: #3a1e1a; --danger-line: #7a3a2e;
-    --danger-foreground: #0f2627;
-  }
-}
-@theme inline {
-  --color-background: var(--background);  --color-card: var(--card);
-  --color-foreground: var(--foreground);  --color-muted: var(--muted);
-  --color-line: var(--line);              --color-brand: var(--brand);
-  --color-accent: var(--accent);          --color-accent-foreground: var(--accent-foreground);
-  --color-soft: var(--soft);              --color-soft-foreground: var(--soft-foreground);
-  --color-highlight: var(--highlight);    --color-highlight-foreground: var(--highlight-foreground);
-  --color-danger: var(--danger);          --color-danger-bg: var(--danger-bg);
-  --color-danger-foreground: var(--danger-foreground);
-  --color-danger-line: var(--danger-line);
-}
-```
+> `line` ต่ำกว่า 3:1 ใช้ได้กับ**เส้นคั่นตกแต่ง** แต่ช่องกรอกห้ามพึ่งเส้นขอบอย่างเดียวในการบอกว่าเป็นช่อง ต้องมีพื้น `background`, label หรือ placeholder ช่วย ส่วนโหมด `prefers-contrast: more` จะเปลี่ยน `--line` เป็น `muted` ให้เอง
 
 **กฎการใช้สี**
-- **ปุ่มมี 2 ระดับหลัก (ตั้งแต่ PR #49):**
-  - **ปุ่มหลักของกรอบแอปและ sheet** แบบ Threads = `bg-foreground text-background` (ปุ่มดำ/ครีมทึบ) เช่น "ตั้งตี้" ในฟอร์ม, "เสร็จสิ้น" ในแก้ไขโปรไฟล์, "เข้าสู่ระบบ" ในกล่อง guest และ chip ที่ถูกเลือกใน `/search` (contrast 11.14 light / 13.96 dark)
-  - **ปุ่มการกระทำในเนื้อหา** = `bg-accent text-accent-foreground` เช่น เข้าร่วม, ยืนยันคำขอ, ปุ่มในหน้า login/register
-- ปุ่มรอง = `border border-line` (มักเป็น `rounded-full`) · ปุ่ม CTA รอง/สถานะรอ = `bg-highlight text-highlight-foreground` · chip หมวด = `bg-soft text-soft-foreground`
-- error/แบนเนอร์ยกเลิกใช้ token `danger*` แทน `text-red-700 dark:text-red-300` เดิม
-- `brand` (`#359FA0`) ใช้กับพื้นผิวและไอคอนเท่านั้น เพราะเป็นตัวอักษรบน cream ได้แค่ 2.8:1 หากต้องการลิงก์สีเขียวน้ำทะเลให้ใช้ `accent`
-- **focus ring ใช้ `accent`** (`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`) เพราะ `brand` บน cream ได้ 2.8:1 ต่ำกว่าเกณฑ์ 3:1 ของ outline ส่วน accent ได้ 5.05 (light) / 9.51 (dark)
-- ห้ามวางตัวอักษรบนพื้น `brand` (Ink บน brand ได้ 3.98, ขาวได้ 3.17 ต่ำกว่า 4.5)
-- ปุ่มอันตราย (ยกเลิกตี้) = `bg-danger text-danger-foreground` · badge สถานะใน `/my-party`: ยกเลิก = `danger*`, รออนุมัติ = `highlight`, ออกแล้ว = `border-line text-muted`
-- ห้ามใช้ส้มเป็นสีตัวอักษรบนพื้น cream (contrast ต่ำ) ใช้เป็นพื้นของ badge/ปุ่มเท่านั้น
+- **ปุ่มหลัก** (ทั้งกรอบแอป, sheet และในเนื้อหา) = `bg-foreground text-background` หรือ `bg-accent text-accent-foreground` (ค่าเท่ากัน) · **ปุ่มรอง** = `border border-line` (มักเป็น `rounded-full`) · **ปุ่มอันตราย** = `bg-danger text-danger-foreground`
+- **chip หมวด / สถานะรอ / แถบประกาศ** = `bg-soft text-soft-foreground` · badge "รออนุมัติ" ใน `/my-party` = `border border-foreground text-foreground` · ยกเลิก = `danger*` · ออกแล้ว = `border-line text-muted`
+- **ลิงก์ในข้อความต้องมีเส้นใต้** (`underline underline-offset-4`) เพราะ accent เป็นสีเดียวกับตัวอักษร ถ้าไม่มีเส้นใต้จะดูไม่ออกว่ากดได้
+- **สถานะต้องไม่สื่อด้วยสีอย่างเดียว** (ใน monochrome ทำไม่ได้อยู่แล้ว) ให้ใช้ข้อความ ไอคอน หรือรูปทรง (ขอบ/พื้น) ประกอบ
+- error และแบนเนอร์ยกเลิกใช้ `danger*` เท่านั้น เป็นสีเดียวในแอปที่ไม่ใช่ขาวดำ
+- **focus ring** = `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`
 
-- **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):** ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`) `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ) ส่วน `globals.css` ใช้ token มืดเมื่อ `[data-theme="dark"]` หรือเมื่อระบบเป็นมืดและไม่ได้บังคับ light ผลคือไม่กะพริบตอนโหลด ปุ่มเลือกธีมอยู่ในเมนู "≡" (หัวข้อถัดไป)
-- **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าแก้ token มืด ต้องแก้ทั้ง 2 block ใน `globals.css` ให้เหมือนกัน (`.brand-light` / `.brand-dark` ของโลโก้ก็มี 2 block เช่นกัน)
+- **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):**
+  - ค่าเก็บใน cookie `matee-theme` (`lib/theme.js`)
+  - `app/layout.jsx` อ่านแล้วใส่ `data-theme="light|dark"` บน `<html>` (ไม่ใส่เมื่อตามระบบ)
+  - `globals.css` ตั้ง `color-scheme: light dark` เป็นค่าเริ่มต้น และ `[data-theme="light"]` / `[data-theme="dark"]` บังคับ `color-scheme` ข้างเดียว ทำให้ `light-dark()` ทุกตัวเลือกค่าถูก และไม่กะพริบตอนโหลด
+  - ปุ่มเลือกธีมอยู่ในเมนู "≡" (หัวข้อถัดไป)
+- **ใช้ token เสมอ** ห้าม hard-code สีอย่าง `bg-white` หรือ `text-zinc-900` ถ้าเพิ่ม token ใหม่ ให้เขียนเป็น `light-dark()` ใน `:root` แล้วผูกใน `@theme inline` ส่วนโลโก้ยังใช้ class `.brand-light` / `.brand-dark` ที่มีกฎทั้งแบบ `data-theme` และแบบ media query
 - `@media (prefers-contrast: more)` เปลี่ยน `--line` เป็นสี `muted` ให้เส้นขอบชัดขึ้น
 
 ### กรอบแอป (App shell) แบบ Threads
@@ -775,6 +730,7 @@ npm run dev          # http://localhost:3000
 | #5 | live chat + หมดอายุ 7 วัน | ✅ merge เข้า `development` แล้ว (PR #48) |
 | #6 | join/leave/approve/time conflict + QA รอบ 1–2 | ✅ merge เข้า `development` แล้ว (PR #48) |
 | – | Restyle แบบ Threads (sidebar, `/search`, modal, โปรไฟล์, โลโก้, splash) | ✅ merge เข้า `development` แล้ว (PR #49) |
+| – | ธีมขาวดำ (`light-dark()`) | ✅ merge เข้า `development` แล้ว (PR #50) |
 | #7 (+#22, #23, #24) | admin + moderation | 🌿 branch `22-...` / `7-...` |
 | #8 | จำนวนคน live บนการ์ด | ⏳ (ใช้แพทเทิร์นในหัวข้อ 13) |
 | #9 | deploy Vercel + smoke test | ⏳ |
@@ -783,7 +739,7 @@ npm run dev          # http://localhost:3000
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
 2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ซึ่ง branch 22 เปลี่ยนแล้ว อย่าแก้ซ้ำซ้อน ให้ merge ตาม branch นั้น
 3. **รูปแบบผลลัพธ์ของ action ไม่ตรงกัน:** admin/avatar ใช้ `{ error }` ส่วน party/chat ใช้ `{ ok, code, message }` ให้ใช้แบบหลังเป็นมาตรฐาน
-4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม Lagoon Sunset (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
+4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. **`getUser()` ซ้ำใน 1 request:** layout กับ page ใช้ `loadAccount()` (cache) ร่วมกันแล้ว แต่ middleware และ `getViewerMembership`/`CreateParty` ยังเรียก `getUser()` ของตัวเอง หน้าที่ล็อกอินจึงช้ากว่าหน้า guest ราว 2 เท่า แนวทางลด: ใช้ user จาก `cache()` ตัวเดียวทั้ง request และใช้ `getClaims()` ใน middleware (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
