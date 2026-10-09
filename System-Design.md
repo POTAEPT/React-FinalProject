@@ -53,8 +53,7 @@ MaTee คือเว็บหาตี้ทำกิจกรรมสำห�
 | **User** | ล็อกอินแล้ว | ตั้งตี้, เข้าร่วม/ขอเข้าร่วม, ออก, ดู `/my-party` |
 | **Member** | User ที่มีแถวใน `party_members` เป็น `pending` หรือ `confirmed` ของตี้นั้น | คุยในแชทของตี้ |
 | **Host** | เจ้าของตี้ (`parties.owner_id`) เป็น member `confirmed` เสมอ | อนุมัติ/ปฏิเสธคำขอ, ยกเลิกตี้, ลบข้อความในตี้ตัวเอง (#24) |
-| **Admin** | `profiles.role = 'admin'` ตั้งด้วยมือใน Supabase | ดูแลทุกตี้, แบนผู้ใช้, ลบข้อความใดก็ได้ |
-| **Banned** | `profiles.banned_at` ไม่เป็น null | ถูกส่งไป `/banned` และเขียนข้อมูลใดๆ ไม่ได้ |
+| **Admin** | `profiles.role = 'admin'` ตั้งด้วยมือใน Supabase | ดูแลทุกตี้, ดูรายชื่อผู้ใช้, ลบข้อความใดก็ได้ |
 
 **Flow หลัก**
 ```
@@ -93,7 +92,7 @@ MaTee คือเว็บหาตี้ทำกิจกรรมสำห�
 └──────────────┬──────────────────────────────────────────┼──────────┘
                │ HTTP: หน้าเว็บ + Server Actions (POST)     │
 ┌──────────────▼────────── Next.js (Vercel) ──────────────┼──────────┐
-│  middleware.js   refresh session, กัน route, ส่งคนถูกแบน  │          │
+│  middleware.js   refresh session, กัน route              │          │
 │  Server Components (page.jsx)  อ่านข้อมูลด้วย session ผู้ใช้│          │
 │  Server Actions (lib/*/actions.js)  เขียนข้อมูล + revalidate │          │
 └──────────────┬──────────────────────────────────────────┼──────────┘
@@ -197,13 +196,12 @@ React-FinalProject/
 | `/register` | Guest | Client form | สมัคร (display name, email, password) | ✅ |
 | `/account` | User | Server | โปรไฟล์ (ชื่อ, อีเมล, role, avatar), จำนวนตี้ที่ตั้ง/เข้าร่วม, แท็บ `?tab=joined`, ปุ่มแก้ไขโปรไฟล์และออกจากระบบ | ✅ |
 | `/account/edit` | User | Modal บนโปรไฟล์ | แก้ชื่อที่แสดง (`updateDisplayName`) และเปลี่ยนรูป (`uploadAvatar`) เข้า URL ตรงแล้วปิดจะไป `/account` | ✅ |
-| `/banned` | ทุกคน | Server | หน้าแจ้งว่าถูกแบน | ✅ |
-| `/admin` | Admin (คนอื่นรวม guest ได้ 404) | Server | ตัวเลข: ตี้เปิดอยู่/จบแล้ว/ยกเลิก, ผู้ใช้ (+ ถูกระงับ), การเข้าร่วม (confirmed ไม่นับ host), คำขอรออนุมัติ, ข้อความ · สมัครล่าสุด 5 คน · แท็บ ภาพรวม/ตี้/ผู้ใช้ (`app/admin/layout.jsx`) | ✅ #22 |
-| `/admin/parties` | Admin | Server + client ปุ่ม | ทุกตี้ (รวมจบแล้ว ยกเลิก และของ host ที่ถูกระงับ) · ค้นหาชื่อตี้/สถานที่/เจ้าของ · กรองสถานะและหมวดผ่าน URL (`?q=&status=&category=`) · ยกเลิก (เฉพาะที่ยังไม่จบ) / ลบ ผ่าน ConfirmDialog | ✅ #23 |
-| `/admin/users` | Admin | Server + client ปุ่ม | ชื่อ, บทบาท, วันที่สมัคร, สถานะระงับ · ค้นหาชื่อ · ระงับ/ยกเลิกการระงับ (แถวของตัวเองไม่มีปุ่ม) ไม่แสดงอีเมลเพราะอยู่ใน `auth.users` ที่อ่านได้ด้วย service role เท่านั้น | ✅ #23 |
+| `/admin` | Admin (คนอื่นรวม guest ได้ 404) | Server | ตัวเลข: ตี้เปิดอยู่/จบแล้ว/ยกเลิก, ผู้ใช้, การเข้าร่วม (confirmed ไม่นับ host), คำขอรออนุมัติ, ข้อความ · สมัครล่าสุด 5 คน · แท็บ ภาพรวม/ตี้/ผู้ใช้ (`app/admin/layout.jsx`) | ✅ #22 |
+| `/admin/parties` | Admin | Server + client ปุ่ม | ทุกตี้ (รวมจบแล้วและยกเลิก) · ค้นหาชื่อตี้/สถานที่/เจ้าของ · กรองสถานะและหมวดผ่าน URL (`?q=&status=&category=`) · ยกเลิก (เฉพาะที่ยังไม่จบ) / ลบ ผ่าน ConfirmDialog | ✅ #23 |
+| `/admin/users` | Admin | Server | ชื่อ, บทบาท, วันที่สมัคร · ค้นหาชื่อ · ไม่มีการแบน (เอาออก 2026-10-10) ไม่แสดงอีเมลเพราะอยู่ใน `auth.users` ที่อ่านได้ด้วย service role เท่านั้น | ✅ #23 |
 | `/admin/parties/[id]` | Admin | Server + client ปุ่ม | รายละเอียดตี้ + transcript ทั้งหมดที่ยังเก็บอยู่ (แจ้งเมื่อแชทใกล้/หมดอายุ) · ลบข้อความ, ยกเลิก/ลบตี้ (ลบแล้วกลับไปรายการ) | ✅ #24 |
 
-**หน้าที่ไม่มีกรอบแอป:** `/login`, `/register`, `/banned` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
+**หน้าที่ไม่มีกรอบแอป:** `/login`, `/register` (`BARE_PATHS` ใน `app-shell.jsx`) แสดงเต็มจอโดยไม่มี sidebar
 
 **Route ที่ middleware บังคับล็อกอิน:** `/create`, `/my-party`, `/manage`, `/account` (รวม `/account/edit`) ถ้ายังไม่ล็อกอินจะ redirect ไป `/login?next=<path>` เมื่อเพิ่มหน้าที่ต้องล็อกอิน**ต้องเพิ่มใน `protectedPaths`** และหน้านั้นต้องเช็ค user เองซ้ำด้วย (เผื่อ middleware ไม่ทำงาน)
 
@@ -243,8 +241,7 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 ### middleware.js (ทุก request ยกเว้นไฟล์ static)
 1. `updateSession()` refresh token ที่ใกล้หมดอายุ แล้วแนบ cookie ใหม่ไปกับ response
 2. ยังไม่ล็อกอินแต่เข้า protected path → redirect ไป `/login?next=...`
-3. ล็อกอินแล้วแต่ `profiles.banned_at` ไม่เป็น null → redirect ไป `/banned`
-4. ตอน redirect ต้องคัด cookie จาก `supabaseResponse` ไปด้วย (`redirectWithSession`) ไม่อย่างนั้น session ที่เพิ่ง refresh จะหาย
+3. ตอน redirect ต้องคัด cookie จาก `supabaseResponse` ไปด้วย (`redirectWithSession`) ไม่อย่างนั้น session ที่เพิ่ง refresh จะหาย
 
 ---
 
@@ -263,13 +260,13 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 ### ตารางสิทธิ์ (ตาม RLS ใน schema)
 | ตาราง | อ่าน | เพิ่ม | แก้ | ลบ |
 |---|---|---|---|---|
-| `profiles` | ทุกคน | trigger ตอนสมัคร | ตัวเอง (ห้ามแก้ `role`; `banned_at` แก้ได้เฉพาะ admin) | – |
+| `profiles` | ทุกคน | trigger ตอนสมัคร | ตัวเอง (ห้ามแก้ `role`; `banned_at` แก้ได้เฉพาะ admin แต่แอปไม่ใช้แล้ว) | – |
 | `parties` | ทุกคน | ตัวเอง, ไม่ถูกแบน | owner / admin (ยกเลิกแล้วเปิดกลับไม่ได้; `confirmed_count` แก้ได้เฉพาะ trigger) | owner / admin |
 | `party_members` | แถว confirmed: ทุกคน · แถวตัวเอง · owner เห็นทุกแถวของตี้ตัวเอง · admin | ตัวเอง ตาม `join_allowed()` | owner: เปลี่ยนเป็น confirmed/rejected · ตัวเอง: pending/confirmed → cancelled · ตัวเอง: cancelled → join ใหม่ | – (cascade) |
 | `party_messages` | member (pending/confirmed) + admin | member, ไม่ถูกแบน, ก่อนแชทหมดอายุ | – | เจ้าของข้อความ (ขณะยังเป็น member) / host / admin |
 | `storage.objects` (avatars) | ทุกคน | โฟลเดอร์ `<userId>/` ของตัวเอง | ของตัวเอง | ของตัวเอง |
 
-ทุก policy การเขียนของผู้ใช้ทั่วไปมี `not public.is_banned()` แล้ว ผู้ใช้ที่ถูกแบนจึงเขียนไม่ได้แม้ session ยังไม่หมดอายุ
+ทุก policy การเขียนของผู้ใช้ทั่วไปมี `not public.is_banned()` อยู่ใน DB แต่**แอปเอาฟีเจอร์แบนออกแล้ว** (2026-10-10) ไม่มีโค้ดตั้งหรืออ่าน `banned_at` · **ห้ามตั้ง `banned_at` ด้วยมือ** คนนั้นจะเขียนอะไรไม่ได้เลยโดยไม่มีหน้าแจ้ง
 
 ---
 
@@ -314,7 +311,7 @@ party_members                 party_messages
 | `has_time_conflict(user, party)` / `(user, start, end, exclude)` | เช็คช่วงเวลาซ้อน (ใช้ใน trigger และเรียกผ่าน RPC ได้) |
 | `join_allowed(party, status)` | ไม่ใช่ host, ตี้ open, ยังไม่เริ่ม และ status ตรงกับ join mode |
 | `is_active_member(party)` | ผู้เรียกเป็น pending/confirmed ใช้ตรวจสิทธิ์แชท |
-| `is_admin()` / `is_banned()` | ใช้ใน policy |
+| `is_admin()` / `is_banned()` | ใช้ใน policy (`is_banned()` เหลือจากฟีเจอร์แบนที่เอาออกแล้ว) |
 | `chat_expires_at(party)` | จบ + 7 วัน หรือถ้าถูกยกเลิกใช้ `updated_at` + 7 วัน |
 | `purge_expired_chats()` | ลบข้อความที่หมดอายุ (pg_cron ทุกวัน 20:00 UTC) |
 | trigger `enforce_party_capacity` | raise `'Party is full'` / `'The host stays confirmed'` |
@@ -471,7 +468,6 @@ export async function doSomething(partyId, input) {
 | `uploadAvatar({ userId, file })` → `{ ok, publicUrl }` | `lib/avatar/actions.js` | `/` (layout) |
 | `updateDisplayName(name)` | `lib/auth/profile-actions.js` | `/` (layout) |
 | admin: `cancelPartyAsAdmin(id)` (เฉพาะตี้ที่ยังไม่จบ), `deletePartyAsAdmin(id)` | `lib/admin/actions.js` | `/`, `/search`, `/my-party`, `/party/[id]`, `/manage/[id]`, `/admin` (layout) |
-| admin: `setUserBannedAsAdmin(userId, boolean)` (ห้ามตัวเอง) | `lib/admin/actions.js` | `/` (layout) ทั้งเว็บ เพราะฟีดและหน้าตี้ซ่อนตี้ของคนที่ถูกระงับ |
 | admin: `deleteMessageAsAdmin(messageId)` | `lib/admin/actions.js` | `/admin`, `/admin/parties/[id]`, `/party/[id]` |
 
 > ทุก action คืน `{ ok, code, message }` แล้ว admin action และ `deletePartyMessage` อ่านแถวที่ถูกแก้กลับมา (`.select("id")`) ถ้า RLS ไม่ให้หรือไม่มีแถวจะได้ `not_found`/`not_allowed` แทนการคืน ok เงียบๆ
@@ -482,8 +478,8 @@ export async function doSomething(partyId, input) {
 
 | ฟังก์ชัน | ไฟล์ | คืนอะไร |
 |---|---|---|
-| `listParties({ q, category, availability, after, before, host })` | `lib/parties/queries.js` | `{ ok, parties, commitments }` ตัดตี้ของ host ที่ถูกแบน · `after`/`before` กรองวันที่ใน DB, `q`/`host` กรองหลัง query · ค่า filter อ่านจาก URL ด้วย `readFeedFilters(searchParams, defaultAvailability)` (`/` ใช้ `open`, `/search` ใช้ `all`) |
-| `getParty(id)` | 〃 | `{ ok, party }` (`null` ถ้าไม่มีหรือ host ถูกแบน) |
+| `listParties({ q, category, availability, after, before, host })` | `lib/parties/queries.js` | `{ ok, parties, commitments }` · `after`/`before` กรองวันที่ใน DB, `q`/`host` กรองหลัง query · ค่า filter อ่านจาก URL ด้วย `readFeedFilters(searchParams, defaultAvailability)` (`/` ใช้ `open`, `/search` ใช้ `all`) |
+| `getParty(id)` | 〃 | `{ ok, party }` (`null` ถ้าไม่มี) |
 | `getViewerMembership(partyId)` | 〃 | `{ user, membership, commitments }` |
 | `listPartyMembers(partyId)` | 〃 | `{ ok, members }` พร้อม `displayName`, `avatarUrl` |
 | `listMyMemberships(supabase, userId)` | `lib/parties/my-commitments.js` | ทุกแถวของผู้ใช้พร้อมข้อมูลตี้ (ใช้ใน `/my-party`) |
@@ -593,7 +589,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 - `@media (prefers-contrast: more)` เปลี่ยน `--line` เป็นสี `muted` ให้เส้นขอบชัดขึ้น
 
 ### กรอบแอป (App shell) แบบ Threads
-ทุกหน้า ยกเว้น `/login`, `/register`, `/banned` (`BARE_PATHS`) ถูกห่อด้วย `AppShell` (`components/app-shell.jsx`) + `SiteHeader` (`components/site-header.jsx`)
+ทุกหน้า ยกเว้น `/login`, `/register` (`BARE_PATHS`) ถูกห่อด้วย `AppShell` (`components/app-shell.jsx`) + `SiteHeader` (`components/site-header.jsx`)
 
 | ขนาดจอ | ส่วนนำทาง | เนื้อหา |
 |---|---|---|
@@ -763,14 +759,15 @@ npm run dev          # http://localhost:3000
 
 ### Known issues / หนี้ทางเทคนิค
 1. **`supabase/schema.sql` เป็นสำเนาเก่า:** ไม่ตรงกับ migration ตรงส่วน bucket avatars (ไม่มี size limit / MIME types) และยังไม่มีการ drop `skips` ให้ใช้ `supabase/migrations/` เป็นแหล่งจริง และควรลบหรือ generate `schema.sql` ใหม่ (SQL syntax `on conflict (id) do update` ใน migration แก้แล้วเมื่อ 2026-10-09)
-2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ทำเป็นงานสุดท้ายของ #7 หลังคุยแผนกับทีม (พร้อมเปลี่ยนเป็น `getClaims()` และวิธีเช็คแบน) การเปลี่ยนชื่อจาก branch 22 ไม่ได้ย้ายมา
+2. **`middleware.js` → `proxy.js`:** Next 16 แจ้งเตือนว่า deprecated ทำเป็นงานสุดท้ายของ #7 (พร้อมเปลี่ยนเป็น `getClaims()`) การเปลี่ยนชื่อจาก branch 22 ไม่ได้ย้ายมา
 3. ~~**รูปแบบผลลัพธ์ของ action ไม่ตรงกัน**~~ แก้แล้ว 2026-10-09: ทุก action ใช้ `fail()` จาก `lib/action-result.js` รวม admin
 4. ~~สีของหน้า auth/account ใช้ `zinc`/`white` ตรงๆ~~ แก้แล้ว 2026-10-09: ทุกหน้าใช้ token ของธีม (เหลือแค่ `bg-black/40` ของ backdrop และ overlay ตอนอัปโหลดรูป ซึ่งตั้งใจใช้)
 5. **`getUser()` ซ้ำใน 1 request:** ~~layout, page และ query ต่างคนต่างเรียก~~ แก้แล้ว 2026-10-09: ใช้ `getCurrentUser()` (cache) ตัวเดียว และ `listParties` โหลดตี้ที่เกี่ยวข้องกับ commitments พร้อมกัน (prod, median 10 ครั้ง: `/manage` 539→329ms, `/party` 400→330ms, `/create` 480→392ms, `/` 455→398ms) ที่เหลือคือ middleware ซึ่งยังเรียก `getUser()` + เช็คแบน ทุก request รอทำหลัง branch 22 (`proxy.js`) merge โดยเปลี่ยนเป็น `getClaims()` (ดู `matee/Claude-QA.md` U-1, N-6)
 6. ~~ลิงก์ "ตี้อื่นในหมวด" ไป `/?category=`~~ แก้แล้ว: ไป `/search?category=`
 7. Realtime DELETE ของ `party_messages` ส่งไปทุกคนที่เปิดแชทอยู่ทุกตี้ (ข้อจำกัดของ Supabase) ยังรับได้เพราะการลบเกิดเฉพาะตอน moderation
 8. ~~ยังไม่มีปุ่มลบข้อความของ host บนหน้าตี้ (#24)~~ แก้แล้ว: host มีปุ่ม "ลบ" 2 จังหวะในแชท (`DeleteMessageButton`) admin ลบได้ที่ `/admin/parties/[id]`
-9. **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
+9. **เอาฟีเจอร์แบนผู้ใช้ออกแล้ว (2026-10-10):** ไม่มีหน้า `/banned`, action แบน หรือการซ่อนตี้ของคนที่ถูกแบนแล้ว แต่คอลัมน์ `profiles.banned_at`, `is_banned()` และ policy ที่ใช้ยังอยู่ใน DB (ไม่แก้ schema) ถ้าจะลบให้ทำเป็น migration ใหม่ ส่วนช่องโหว่เดิม (policy ลบข้อความของ host, อ่านแชท, storage avatar ไม่เช็คแบน, `is_admin()` ไม่ดูแบน) ไม่มีผลแล้วเพราะไม่มีใครถูกแบน
+9.1 **เอาฟีเจอร์ข้ามตี้ (skip) ออกแล้ว:** โค้ดไม่มี `SkipButton`, `skipParty()` หรือตัวกรอง `skips` ใน `listParties` แล้ว แต่ตาราง `public.skips` ยังอยู่ใน DB โดยไม่มีโค้ดใช้ ถ้าจะลบให้ทำเป็น migration ใหม่ (`drop table public.skips`) หลังทุกเครื่องใช้โค้ดที่ไม่มี skip แล้ว และห้ามแก้ migration เดิม
 
 10. ~~Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม~~ แก้แล้ว: แสดงเฉพาะเมื่อโหลดเกิน 1 วินาที (เดิม: อย่างน้อย 0.7 วินาทีทุกครั้ง)
 11. ~~มือถือ: guest ไม่มีที่เปลี่ยนธีม~~ แก้แล้ว: แถบบนมือถือของหน้า `/` มีเมนู ≡ (หน้าอื่นบนมือถือยังไม่มีแถบบน)

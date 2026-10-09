@@ -21,11 +21,10 @@
 | /create | User (กลายเป็น Host) | ฟอร์มตั้งตี้ — ชื่อ หมวด (เลือก "อื่นๆ" แล้วพิมพ์หมวดเองได้) วันที่ เวลา ระยะเวลา (30–480 นาที) สถานที่ จำนวนที่รับ รายละเอียด และโหมด Public/Approve ตรวจเวลาชนกับตี้ที่ตัวเองมีอยู่ก่อนบันทึก |
 | /my-party | User | agenda ตี้ของฉันจัดกลุ่มตามวัน (โฮสต์ / ยืนยันแล้ว / รอการยืนยัน) ตี้ที่ถูกยกเลิกมี chip กำกับ ตี้ที่จบแล้วอยู่ในส่วน "ที่ผ่านมา" ที่พับไว้ แต่ละแถวมีปุ่มแชทไป `/party/[id]#chat` และไอคอนเฟืองไป `/manage/[id]` เฉพาะตี้ที่ตัวเองโฮสต์ |
 | /account | User | โปรไฟล์ เปลี่ยนรูป และแสดง claims ที่ decode จาก JWT (`sub`, `email`, `exp`) |
-| /banned | User | หน้าที่ middleware ส่งผู้ใช้ที่ถูกแบน (`profiles.banned_at` ถูกตั้งค่า) มา |
 | /manage/[id] | Host | จัดการตี้ของตัวเอง — สรุปตี้ โหมดเข้าร่วม จำนวน confirmed/max คิวคำขอพร้อมปุ่ม Approve/Reject (โหมด Approve) รายชื่อสมาชิก และปุ่มยกเลิกตี้ (มี confirm dialog, ย้อนกลับไม่ได้) ถ้าไม่ใช่เจ้าของได้ 404 |
 | /admin | Admin | dashboard — จำนวน users, parties (open / cancelled / finished), joins, messages และรายชื่อสมัครล่าสุด |
 | /admin/parties | Admin | ทุกตี้รวม cancelled และ finished มีค้นหาและ filter สถานะ/หมวด ยกเลิกหรือลบตี้ใดก็ได้ |
-| /admin/users | Admin | ทุกบัญชี (display name, role, วันที่สมัคร, สถานะแบน) แบน/ปลดแบนได้ |
+| /admin/users | Admin | ทุกบัญชี (display name, role, วันที่สมัคร) |
 | /admin/parties/[id] | Admin | รายละเอียดตี้ + แชททั้งหมด ลบข้อความใดก็ได้ |
 
 `/create`, `/my-party`, `/manage/[id]`, `/account` ถ้ายังไม่ login จะถูก redirect ไป `/login?next=` · หน้า `/admin/*` ทุกหน้าเรียก `requireAdmin()` ก่อน ถ้าไม่ใช่ admin ได้ 404
@@ -46,7 +45,7 @@
 | Server Action (`createParty`, `joinParty`, `leaveParty`, `skipParty`, `sendPartyMessage`, approve/reject, `cancelParty`, admin actions) | Server Action | โค้ดที่เขียน DB และเช็ค session/role ต้องไม่หลุดไป browser + `revalidatePath` |
 | /admin, /admin/parties, /admin/users, /admin/parties/[id] | Server | เรียก `requireAdmin()` แล้ว query ตรง ปุ่ม cancel/delete/ban เป็น Client Component เล็กๆ ที่เรียก admin Server Action |
 | layout + nav | Server | อ่าน session ฝั่ง server เพื่อโชว์ลิงก์ "ตี้ของฉัน" และลิงก์ Admin ตาม role ไม่มี interactive |
-| `middleware.ts` | Edge (ทุก request) | refresh JWT ที่หมดอายุ redirect guest ออกจากหน้าที่ต้อง login และส่งผู้ใช้ที่ถูกแบนไป `/banned` |
+| `middleware.ts` | Edge (ทุก request) | refresh JWT ที่หมดอายุ และ redirect guest ออกจากหน้าที่ต้อง login |
 
 ## 4. ข้อมูลมาจากไหน + จุดที่ต้องเขียนข้อมูลกลับ
 
@@ -66,7 +65,7 @@
   - `joinParty(partyId)` — insert/อัปเดต `party_members` เป็น `confirmed` (Public) หรือ `pending` (Approve) เช็คเวลาชนแบบเดียวกัน · `leaveParty(partyId)` ตั้งแถวเป็น `cancelled` และปิดแชทให้คนนั้น · `skipParty(partyId)` เขียนลง `skips` — revalidate `/` และ `/my-party`
   - `sendPartyMessage(partyId, body)` — insert `party_messages` เมื่อยังเป็น pending/confirmed และแชทยังไม่หมดอายุ Realtime ส่งต่อให้คนที่เหลือ · ลบข้อความตัวเองได้ โฮสต์ลบได้ทุกข้อความในตี้ตัวเอง
   - approve / reject บน `/manage/[id]` — อัปเดต status ของ `party_members` · `cancelParty(partyId)` ตั้ง `parties.status = 'cancelled'` — revalidate `/`, `/party/[id]`, `/manage/[id]`, `/my-party`
-  - admin actions — cancel/delete ตี้, ban/unban (ตั้ง `profiles.banned_at`), ลบข้อความใดก็ได้ ผ่าน policy ที่ใช้ `is_admin()`
+  - admin actions — cancel/delete ตี้ และลบข้อความใดก็ได้ ผ่าน policy ที่ใช้ `is_admin()` (ฟีเจอร์แบนผู้ใช้เอาออกแล้ว)
 
 ## 5. แบ่งงานกันยังไง
 
@@ -74,7 +73,7 @@
 | -- | --------- |
 | คนที่ 1 | scaffold Next.js, Supabase client ฝั่ง server/browser, `middleware.ts`, ระบบ auth (register / login / JWT session / `getSession()`), อัปโหลดรูปโปรไฟล์ไป Storage, หน้า `/account` |
 | คนที่ 2 | ฟีดการ์ดที่ `/` พร้อมค้นหาและ filter, `/categories`, `/party/[id]`, ฟอร์ม `/create` (รวม join mode, ระยะเวลา, เช็คเวลาชน), แชทในตี้แบบ live, หน้า `/my-party` |
-| คนที่ 3 | `/manage/[id]` (approve / reject / ยกเลิกตี้), จำนวนคน live บนการ์ดผ่าน Realtime, หน้า admin ทั้งหมด (dashboard, จัดการตี้, จัดการผู้ใช้, ดูแลแชท), `/banned`, deploy ขึ้น Vercel |
+| คนที่ 3 | `/manage/[id]` (approve / reject / ยกเลิกตี้), จำนวนคน live บนการ์ดผ่าน Realtime, หน้า admin ทั้งหมด (dashboard, จัดการตี้, จัดการผู้ใช้, ดูแลแชท), deploy ขึ้น Vercel |
 
 ต้องส่ง
 
