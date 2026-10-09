@@ -45,7 +45,7 @@ function toCardParty(item, hostName, hostAvatarUrl) {
 export default async function AccountPage({ searchParams }) {
   const session = await getSession()
 
-  // Guard in case the middleware misses: guests leave.
+  // Guard in case the proxy misses: guests leave.
   if (!session) redirect('/login')
 
   const { tab: rawTab } = await searchParams

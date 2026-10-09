@@ -12,13 +12,13 @@ function redirectWithSession(url, supabaseResponse) {
 }
 
 /**
- * อธิบาย: ไฟล์ Middleware ทำหน้าที่เปรียบเสมือนยามเฝ้าประตู (Guard)
+ * อธิบาย: ไฟล์ Proxy (Next 16 เปลี่ยนชื่อจาก middleware) ทำหน้าที่เปรียบเสมือนยามเฝ้าประตู (Guard)
  * 
  * หน้าที่หลัก:
  * 1. เรียก `updateSession` เพื่อต่ออายุ Token ของ Supabase
  * 2. ป้องกันหน้าต่าง ๆ (Protected Routes) ถ้ายังไม่ได้ Login ให้เด้งไปหน้า /login
  */
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl
 
   // 1. ตรวจสอบและต่ออายุ Session

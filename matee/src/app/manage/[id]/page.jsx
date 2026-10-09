@@ -50,7 +50,7 @@ function MemberRow({ member, children }) {
 }
 
 // Host only. Anyone else, including other signed-in users, gets a 404.
-// Signed-out visitors are sent to /login by the middleware.
+// Signed-out visitors are sent to /login by the proxy (src/proxy.js).
 export default async function ManagePartyPage({ params }) {
   const { id } = await params;
 

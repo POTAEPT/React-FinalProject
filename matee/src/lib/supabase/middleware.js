@@ -3,12 +3,12 @@ import { NextResponse } from 'next/server'
 import { getSupabaseEnv } from './env'
 
 /**
- * อธิบาย: ฟังก์ชันนี้ใช้ใน Middleware เพื่อตรวจสอบและต่ออายุ (Refresh) Token
+ * อธิบาย: ฟังก์ชันนี้ใช้ใน Proxy (`src/proxy.js`) เพื่อตรวจสอบและต่ออายุ (Refresh) Token
  *
  * การทำงานกับ Supabase และ JWT:
  * 1. Supabase เก็บ session ในรูปแบบของ JWT ไว้ใน Cookies
  * 2. JWT มีวันหมดอายุ (มักจะ 1 ชั่วโมง)
- * 3. เมื่อ User เปิดหน้าเว็บ request จะวิ่งผ่าน Middleware ก่อน
+ * 3. เมื่อ User เปิดหน้าเว็บ request จะวิ่งผ่าน Proxy ก่อน
  * 4. เราสร้าง Supabase Client ขึ้นมา และดึงค่าจาก Cookie
  * 5. เมื่อเราเรียก `supabase.auth.getUser()` ตัว @supabase/ssr จะตรวจสอบ Token
  *    ถ้า Token ใกล้หมดอายุ มันจะขอ Token ใหม่ให้ทันที
