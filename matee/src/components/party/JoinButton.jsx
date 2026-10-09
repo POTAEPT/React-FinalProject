@@ -86,7 +86,7 @@ export function JoinButton({ partyId, state }) {
     case "pending":
       control = (
         <div className="grid gap-2">
-          <p className="rounded-xl bg-highlight px-4 py-2.5 text-center text-sm font-medium text-highlight-foreground">
+          <p className="rounded-xl bg-soft px-4 py-2.5 text-center text-sm font-medium text-soft-foreground">
             รอเจ้าของตี้อนุมัติ
           </p>
           <ConfirmDialog

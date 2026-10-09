@@ -33,7 +33,7 @@ function Ribbon() {
             MATEE · มาตี้กัน · MATEE · มาตี้กัน · MATEE · มาตี้กัน · MATEE · มาตี้กัน ·
           </textPath>
         </text>
-        <text fill="var(--highlight)" opacity="0.9">
+        <text fill="var(--muted)" opacity="0.7">
           <textPath href="#matee-ribbon-2">
             มาตี้กัน · MATEE · มาตี้กัน · MATEE · มาตี้กัน · MATEE · มาตี้กัน · MATEE ·
           </textPath>
