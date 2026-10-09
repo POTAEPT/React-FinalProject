@@ -1,3 +1,5 @@
+import { chatState } from "@/lib/chat/expiry";
+import { messageColumns, toMessage } from "@/lib/chat/message";
 import { isPartyCategory } from "@/lib/parties/categories";
 import { loadRelated, matchesSearch, partyColumns } from "@/lib/parties/queries";
 import { partyEndMs } from "@/lib/parties/time";
@@ -158,4 +160,38 @@ export async function listAdminUsers({ q = "" } = {}) {
     .filter((user) => !needle || user.displayName.toLocaleLowerCase("th").includes(needle));
 
   return { ok: true, users };
+}
+
+// One party for /admin/parties/[id]: details, confirmed and pending counts, and
+// the whole chat transcript that is still stored. A chat past its expiry
+// keeps its rows until the nightly purge (purge_expired_chats) removes them.
+export async function getAdminParty(id) {
+  const supabase = await createClient();
+  const [partyResult, messagesResult] = await Promise.all([
+    supabase.from("parties").select(partyColumns).eq("id", id).maybeSingle(),
+    supabase
+      .from("party_messages")
+      .select(messageColumns)
+      .eq("party_id", id)
+      .order("created_at", { ascending: true })
+      .limit(1000),
+  ]);
+
+  if (partyResult.error || messagesResult.error) {
+    console.error("admin party", (partyResult.error ?? messagesResult.error).message);
+    return { ok: false, party: null };
+  }
+
+  if (!partyResult.data) {
+    return { ok: true, party: null };
+  }
+
+  const [party] = await loadRelated(supabase, [partyResult.data]);
+
+  return {
+    ok: true,
+    party,
+    chat: chatState(party),
+    messages: (messagesResult.data ?? []).map(toMessage),
+  };
 }

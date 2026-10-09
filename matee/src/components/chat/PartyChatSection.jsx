@@ -62,6 +62,7 @@ export async function PartyChatSection({ party, viewer }) {
             partyId={party.id}
             currentUserId={viewer.user.id}
             initialMessages={messages}
+            canModerate={viewer.user.id === party.ownerId}
             notice={access.daysLeft ? `แชทจะหายไปใน ${access.daysLeft} วัน` : null}
           />
         </>

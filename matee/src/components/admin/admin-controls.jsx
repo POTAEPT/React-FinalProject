@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 
+import { DeleteMessageButton } from "@/components/chat/DeleteMessageButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   cancelPartyAsAdmin,
+  deleteMessageAsAdmin,
   deletePartyAsAdmin,
   setUserBannedAsAdmin,
 } from "@/lib/admin/actions";
@@ -89,4 +91,8 @@ export function AdminBanButton({ userId, name, banned }) {
       onConfirm={() => setUserBannedAsAdmin(userId, true)}
     />
   );
+}
+
+export function AdminDeleteMessageButton({ messageId }) {
+  return <DeleteMessageButton onDelete={() => deleteMessageAsAdmin(messageId)} />;
 }

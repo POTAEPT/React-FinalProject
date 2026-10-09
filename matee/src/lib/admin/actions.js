@@ -159,3 +159,35 @@ export async function setUserBannedAsAdmin(userId, banned) {
   revalidatePath("/", "layout");
   return { ok: true };
 }
+
+// Delete any chat message. Open chat panels drop it through Realtime.
+export async function deleteMessageAsAdmin(messageId) {
+  if (!isUuid(messageId)) {
+    return fail("not_found", "ไม่พบข้อความนี้");
+  }
+
+  if (!(await currentAdmin())) {
+    return notAdmin();
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("party_messages")
+    .delete()
+    .eq("id", messageId)
+    .select("id, party_id");
+
+  if (error) {
+    console.error("admin delete message", error.message);
+    return fail("unknown", "ลบข้อความไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  if (!data.length) {
+    return fail("not_found", "ไม่พบข้อความนี้ อาจถูกลบไปแล้ว");
+  }
+
+  revalidatePath(`/admin/parties/${data[0].party_id}`);
+  revalidatePath(`/party/${data[0].party_id}`);
+  revalidatePath("/admin");
+  return { ok: true };
+}
