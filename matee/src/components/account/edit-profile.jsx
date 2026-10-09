@@ -11,7 +11,6 @@ export async function EditProfile({ closeHref } = {}) {
   const session = await getSession()
 
   if (!session) redirect('/login?next=/account')
-  if (session.profile.banned_at) redirect('/banned')
 
   return (
     <EditProfileForm

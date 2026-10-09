@@ -13,12 +13,8 @@ import { createClient } from "@/lib/supabase/server";
 // members other than the host, who has a confirmed row of their own.
 export async function getAdminStats() {
   const supabase = await createClient();
-  const [users, banned, parties, members, messages, recentUsers] = await Promise.all([
+  const [users, parties, members, messages, recentUsers] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }),
-    supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .not("banned_at", "is", null),
     supabase
       .from("parties")
       .select("id, owner_id, status, event_date, event_time, duration_minutes"),
@@ -34,7 +30,7 @@ export async function getAdminStats() {
       .limit(5),
   ]);
 
-  const failed = [users, banned, parties, members, messages, recentUsers].find(
+  const failed = [users, parties, members, messages, recentUsers].find(
     (result) => result.error,
   );
 
@@ -60,7 +56,6 @@ export async function getAdminStats() {
     ok: true,
     stats: {
       users: users.count ?? 0,
-      bannedUsers: banned.count ?? 0,
       openParties: partyRows.length - cancelled - finished,
       finishedParties: finished,
       cancelledParties: cancelled,
@@ -90,8 +85,8 @@ export function adminPartyStatus(party) {
   return party.ended ? "finished" : "open";
 }
 
-// Every party, newest event first, including cancelled ones, finished ones and
-// those of banned hosts (the public feed hides all three).
+// Every party, newest event first, including cancelled and finished ones (the
+// public feed hides both).
 //   q         title, place or host name
 //   status    "", "open", "finished" or "cancelled"
 //   category  one of PARTY_CATEGORIES
@@ -138,7 +133,7 @@ export async function listAdminUsers({ q = "" } = {}) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, role, banned_at, created_at")
+    .select("id, display_name, avatar_url, role, created_at")
     .order("created_at", { ascending: false })
     .limit(500);
 
@@ -154,7 +149,6 @@ export async function listAdminUsers({ q = "" } = {}) {
       displayName: user.display_name,
       avatarUrl: user.avatar_url,
       role: user.role,
-      bannedAt: user.banned_at,
       createdAt: user.created_at,
     }))
     .filter((user) => !needle || user.displayName.toLocaleLowerCase("th").includes(needle));

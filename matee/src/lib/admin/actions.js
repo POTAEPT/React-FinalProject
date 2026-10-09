@@ -8,9 +8,9 @@ import { partyEndMs } from "@/lib/parties/time";
 import { createClient } from "@/lib/supabase/server";
 
 // Moderation for /admin. Every action checks the caller is an admin before it
-// touches anything, and RLS checks again (is_admin() policies on parties,
-// profiles and party_messages; a trigger guards profiles.banned_at). Updates
-// and deletes select the changed rows, so a no-op is reported, not ok.
+// touches anything, and RLS checks again (is_admin() policies on parties and
+// party_messages). Updates and deletes select the changed rows, so a no-op is
+// reported, not ok.
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -118,45 +118,6 @@ export async function deletePartyAsAdmin(partyId) {
   }
 
   revalidateParty(partyId);
-  return { ok: true };
-}
-
-// Ban (banned = true) or unban a user. A banned user is sent to /banned, cannot
-// write anything, and their parties leave the feed. An admin cannot ban
-// themselves, which would also lock them out of /admin.
-export async function setUserBannedAsAdmin(userId, banned) {
-  if (!isUuid(userId) || typeof banned !== "boolean") {
-    return fail("invalid", "ข้อมูลไม่ถูกต้อง");
-  }
-
-  const admin = await currentAdmin();
-
-  if (!admin) {
-    return notAdmin();
-  }
-
-  if (admin.id === userId) {
-    return fail("self", "ระงับบัญชีของตัวเองไม่ได้");
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ banned_at: banned ? new Date().toISOString() : null })
-    .eq("id", userId)
-    .select("id");
-
-  if (error) {
-    console.error("admin set banned", error.message);
-    return fail("unknown", banned ? "ระงับบัญชีไม่สำเร็จ ลองอีกครั้ง" : "ยกเลิกการระงับไม่สำเร็จ ลองอีกครั้ง");
-  }
-
-  if (!data.length) {
-    return fail("not_found", "ไม่พบผู้ใช้นี้");
-  }
-
-  // The feed, party pages and the shell all depend on who is banned.
-  revalidatePath("/", "layout");
   return { ok: true };
 }
 

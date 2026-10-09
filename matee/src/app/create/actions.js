@@ -25,7 +25,7 @@ function messageFromDatabase(error) {
     return "บัญชีนี้ยังไม่มีโปรไฟล์";
   }
 
-  if (error.code === "42501" || text.toLowerCase().includes("banned")) {
+  if (error.code === "42501") {
     return "บัญชีนี้สร้างตี้ไม่ได้";
   }
 

@@ -131,7 +131,6 @@ export default async function AdminPartiesPage({ searchParams }) {
                         </Link>
                         <p className="text-sm text-muted">
                           {categoryLabel(party.category, party.customCategory)} · {party.hostName}
-                          {party.hostBanned ? " (ถูกระงับ)" : ""}
                         </p>
                         <p className="text-sm text-muted">
                           {formatEventDate(party.eventDate)} · {formatTimeRange(party.eventTime, party.durationMinutes)} · {party.confirmedCount}/{party.maxMembers} คน

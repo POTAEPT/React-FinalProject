@@ -48,7 +48,6 @@ function toParty(row, owner, counts) {
     endMs: end,
     hostName: owner?.display_name ?? "ไม่ระบุชื่อ",
     hostAvatarUrl: owner?.avatar_url ?? null,
-    hostBanned: Boolean(owner?.banned_at),
     full: row.confirmed_count >= row.max_members,
     started: start <= Date.now(),
     ended: end <= Date.now(),
@@ -63,7 +62,7 @@ export async function loadRelated(supabase, rows) {
     ownerIds.length
       ? supabase
           .from("profiles")
-          .select("id, display_name, avatar_url, banned_at")
+          .select("id, display_name, avatar_url")
           .in("id", ownerIds)
       : Promise.resolve({ data: [], error: null }),
     partyIds.length
@@ -140,10 +139,6 @@ export async function listParties({
   ]);
 
   const parties = related.filter((party) => {
-    if (party.hostBanned) {
-      return false;
-    }
-
     if (!matchesSearch(party, q)) {
       return false;
     }
@@ -184,10 +179,6 @@ export async function getParty(id) {
   }
 
   const [party] = await loadRelated(supabase, [data]);
-
-  if (party.hostBanned) {
-    return { ok: true, party: null };
-  }
 
   return { ok: true, party };
 }

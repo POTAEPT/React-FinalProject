@@ -70,7 +70,6 @@ export default async function AdminPartyPage({ params }) {
           <dt className="text-muted">เจ้าของตี้</dt>
           <dd>
             {party.hostName}
-            {party.hostBanned ? <span className="ml-2 font-medium text-danger">ถูกระงับ</span> : null}
           </dd>
           <dt className="text-muted">วันเวลา</dt>
           <dd>
@@ -92,11 +91,9 @@ export default async function AdminPartyPage({ params }) {
         <div className="flex flex-wrap items-center gap-2 pt-2">
           {state === "open" ? <AdminCancelPartyButton partyId={party.id} title={party.title} /> : null}
           <AdminDeletePartyButton partyId={party.id} title={party.title} redirectTo="/admin/parties" />
-          {party.hostBanned ? null : (
-            <Link href={`/party/${party.id}`} className="ml-auto text-sm text-muted underline underline-offset-4">
-              เปิดหน้าตี้
-            </Link>
-          )}
+          <Link href={`/party/${party.id}`} className="ml-auto text-sm text-muted underline underline-offset-4">
+            เปิดหน้าตี้
+          </Link>
         </div>
       </section>
 

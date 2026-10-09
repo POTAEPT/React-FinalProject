@@ -1,12 +1,11 @@
 import Image from "next/image";
 
-import { AdminBanButton } from "@/components/admin/admin-controls";
 import { listAdminUsers } from "@/lib/admin/queries";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { formatTimestamp } from "@/lib/parties/time";
 
 export const metadata = {
-  title: "จัดการผู้ใช้ | ผู้ดูแลระบบ",
+  title: "ผู้ใช้ | ผู้ดูแลระบบ",
 };
 
 const ROLE_LABELS = { user: "ผู้ใช้", admin: "ผู้ดูแลระบบ" };
@@ -19,7 +18,7 @@ export default async function AdminUsersPage({ searchParams }) {
 
   return (
     <main className="grid gap-4 py-6">
-      <h1 className="px-4 text-2xl font-semibold">จัดการผู้ใช้</h1>
+      <h1 className="px-4 text-2xl font-semibold">ผู้ใช้</h1>
       <form action="/admin/users" role="search" className="flex gap-2 px-4">
         <label htmlFor="admin-user-q" className="sr-only">
           ค้นหาผู้ใช้
@@ -67,18 +66,9 @@ export default async function AdminUsersPage({ searchParams }) {
                         </span>
                       </p>
                       <p className="text-sm text-muted">สมัครเมื่อ {formatTimestamp(user.createdAt)}</p>
-                      {user.bannedAt ? (
-                        <p className="text-sm font-medium text-danger">
-                          ถูกระงับเมื่อ {formatTimestamp(user.bannedAt, { withTime: true })}
-                        </p>
-                      ) : null}
                     </div>
                   </div>
-                  {user.id === admin.id ? (
-                    <span className="text-sm text-muted">บัญชีของคุณ</span>
-                  ) : (
-                    <AdminBanButton userId={user.id} name={user.displayName} banned={Boolean(user.bannedAt)} />
-                  )}
+                  {user.id === admin.id ? <span className="text-sm text-muted">บัญชีของคุณ</span> : null}
                 </li>
               ))}
             </ul>

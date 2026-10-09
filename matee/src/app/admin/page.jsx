@@ -51,12 +51,7 @@ export default async function AdminPage() {
           <section aria-labelledby="activity-stats" className="grid gap-3">
             <h2 id="activity-stats" className="text-base font-semibold">ผู้ใช้และกิจกรรม</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Stat
-                label="ผู้ใช้"
-                value={stats.users}
-                href="/admin/users"
-                note={stats.bannedUsers ? `ถูกระงับ ${stats.bannedUsers} คน` : null}
-              />
+              <Stat label="ผู้ใช้" value={stats.users} href="/admin/users" />
               <Stat label="การเข้าร่วม" value={stats.joins} note="สมาชิกที่ยืนยันแล้ว ไม่นับเจ้าของตี้" />
               <Stat label="คำขอรออนุมัติ" value={stats.pendingRequests} />
               <Stat label="ข้อความในแชท" value={stats.messages} note="แชทที่หมดอายุถูกลบไปแล้ว" />

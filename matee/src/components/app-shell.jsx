@@ -9,7 +9,7 @@ import { PartySearch } from "@/components/party-search";
 import { SiteHeader } from "@/components/site-header";
 
 // Pages that draw their own full-screen layout, with no sidebar or column.
-const BARE_PATHS = ["/login", "/register", "/banned"];
+const BARE_PATHS = ["/login", "/register"];
 
 // Pages whose title sits above the card on desktop.
 const TITLES = { "/": "หาตี้", "/account": "โปรไฟล์" };
