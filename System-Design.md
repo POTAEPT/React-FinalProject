@@ -278,7 +278,7 @@ LoginForm ─► lib/auth/actions.js signIn() ─► supabase.auth.signInWithPas
 |---|---|
 | `party_category` | `sport` กีฬา · `board_game` บอร์ดเกม · `study` ติวสอบ · `cafe` คาเฟ่ · `other` อื่นๆ (ใช้คู่กับ `custom_category`) |
 | `party_status` | `open` · `cancelled` (เปลี่ยนได้ทางเดียว) |
-| `party_join_mode` | `public` (เข้าได้ทันที) · `approve` (รอ host ยืนยัน) |
+| `party_join_mode` | `public` (ป้าย "เข้าได้ทันที") · `approve` (ป้าย "ต้องขออนุมัติ") |
 | `member_status` | `pending` · `confirmed` · `rejected` · `cancelled` (ออกเอง) |
 | `user_role` | `user` · `admin` |
 
@@ -389,6 +389,9 @@ party_members                 party_messages
 | แชทใกล้หมดอายุ | `แชทจะหายไปใน N วัน` |
 | แชทหมดอายุ | `แชทหมดอายุแล้ว` |
 | ส่วนพับใน `/my-party` | `ที่ผ่านมา` |
+| วิธีเข้าร่วม (ป้ายของตี้) | `เข้าได้ทันที` / `ต้องขออนุมัติ` เป็นกติกาของตี้ ไม่ใช่สถานะของคนดู สถานะของคนดูใช้ `รอเจ้าของตี้อนุมัติ` |
+| role | `ผู้ใช้` / `ผู้ดูแลระบบ` ห้ามแสดง `user`/`admin` ดิบ |
+| หน้า error | ข้อความไทยทั่วไป + รหัสอ้างอิง (`error.digest`) **ห้ามแสดง `error.message`** |
 
 ---
 
@@ -515,7 +518,14 @@ export async function doSomething(partyId, input) {
 - title ของหน้า: `"<ชื่อหน้า> | MaTee"`
 
 ### Color theme: Monochrome (ตั้งแต่ PR #50)
-ธีมเป็น**ขาว ดำ และเทา**เท่านั้น ยกเว้นชุด `danger` (error, ออกจากระบบ, ยกเลิก) ที่ยังเป็นสีแดงเพื่อให้คำเตือนยังดูเป็นคำเตือน ธีมเดิม "Lagoon Sunset" (Mint/Teal/Cream/Orange) เลิกใช้แล้ว ส่วนโลโก้แสดงเป็นสีเทา (`filter: grayscale(1)` บน `.brand-light`/`.brand-dark`)
+พื้น ตัวอักษร และปุ่มเป็น**ขาว ดำ และเทา** แต่ไม่ได้ขาวดำล้วน (ทีมเห็นว่าดูเหมือนช่วงไว้อาลัย) จึงใช้**สีจากโลโก้เป็นจุดเน้นเล็กน้อย**:
+- **โลโก้เป็นสีเต็ม** (ไม่ grayscale)
+- **`brand`** (teal เข้ม / mint) ใช้กับแถบที่นั่ง
+- **`brand-soft`** (mint อ่อน) ใช้กับเมนูและ chip ที่เลือก
+- **`highlight`** (ส้ม) ใช้กับสถานะรออนุมัติ
+- **`danger`** (แดง) ใช้กับ error และการยกเลิก
+
+ธีมเดิม "Lagoon Sunset" (พื้น cream) เลิกใช้แล้ว
 
 ### Design tokens (`src/app/globals.css`)
 token แต่ละตัว**เขียนครั้งเดียว**ด้วย `light-dark(ค่าสว่าง, ค่ามืด)` ฝั่งที่ใช้มาจาก `color-scheme` จึงไม่มี block มืดแยกให้ต้องคอยแก้ให้ตรงกันอีก
@@ -529,7 +539,9 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 | `line` | `#E2E2E2` | `#2E2E2E` | เส้นขอบ / เส้นคั่น |
 | `accent` + `accent-foreground` | `#0A0A0A` + `#FFFFFF` | `#F5F5F5` + `#0A0A0A` | ปุ่มหลัก, ลิงก์, focus ring (เท่ากับ `foreground`) |
 | `soft` + `soft-foreground` | `#ECECEC` + foreground | `#262626` + foreground | chip หมวด, avatar ตัวอักษร, สถานะรออนุมัติ, แถบประกาศ |
-| `brand`, `highlight` (+ `-foreground`) | = `accent` | = `accent` | **ชื่อเดิมที่ยังเก็บไว้ให้โค้ดเก่าใช้ได้** ใน monochrome มีค่าเท่า accent ของใหม่ไม่ควรใช้ |
+| `brand` | `#1F7173` (teal เข้ม) | `#8AD6D1` (mint) | แถบที่นั่ง เส้น/พื้นผิวเน้น **ห้ามใช้เป็นสีตัวอักษร** |
+| `brand-soft` | `#E3F4F3` | `#173434` | พื้นของเมนูที่เลือกใน sidebar และ chip ที่เลือกใน `/search` (คู่กับ `border-brand`) |
+| `highlight` + `highlight-foreground` | `#FF8C52` + `#0A0A0A` | `#FF8C52` + `#0A0A0A` | สถานะ "รอ": ปุ่มรอเจ้าของตี้อนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง, จุดบอกว่ามีตัวกรอง |
 | `danger` / `danger-bg` / `danger-line` | `#B3261E` / `#FDECEA` / `#F3B9B4` | `#FF8A80` / `#2A1513` / `#6E3A35` | error, แบนเนอร์ยกเลิก, ออกจากระบบ |
 | `danger-foreground` | `#FFFFFF` | `#0A0A0A` | ตัวอักษรบนปุ่ม `bg-danger` |
 
@@ -547,15 +559,21 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 | danger-foreground บน danger | 6.54 | 8.67 |
 | accent เป็น focus ring บน card | 19.80 | 18.16 |
 | line บน card | **1.30** | **1.46** |
+| brand (แถบที่นั่ง) บนราง `line` / บน card | 4.0 / 5.7 | 8.16 / 11.90 |
+| foreground บน brand-soft / muted บน brand-soft | 17.44 / 4.69 | 12.21 / 5.09 |
+| highlight-foreground บน highlight | 8.60 | 8.60 |
+| highlight (จุดเล็ก) บน card | 2.30 ⚠️ ใช้เป็นจุดเสริมได้ ห้ามเป็นตัวบอกสถานะอย่างเดียว | 8.60 |
 
 > `line` ต่ำกว่า 3:1 ใช้ได้กับ**เส้นคั่นตกแต่ง** แต่ช่องกรอกห้ามพึ่งเส้นขอบอย่างเดียวในการบอกว่าเป็นช่อง ต้องมีพื้น `background`, label หรือ placeholder ช่วย ส่วนโหมด `prefers-contrast: more` จะเปลี่ยน `--line` เป็น `muted` ให้เอง
 
 **กฎการใช้สี**
 - **ปุ่มหลัก** (ทั้งกรอบแอป, sheet และในเนื้อหา) = `bg-foreground text-background` หรือ `bg-accent text-accent-foreground` (ค่าเท่ากัน) · **ปุ่มรอง** = `border border-line` (มักเป็น `rounded-full`) · **ปุ่มอันตราย** = `bg-danger text-danger-foreground`
-- **chip หมวด / สถานะรอ / แถบประกาศ** = `bg-soft text-soft-foreground` · badge "รออนุมัติ" ใน `/my-party` = `border border-foreground text-foreground` · ยกเลิก = `danger*` · ออกแล้ว = `border-line text-muted`
+- **chip หมวด / แถบประกาศ** = `bg-soft text-soft-foreground` · **ที่เลือกอยู่** (เมนู sidebar, chip ใน `/search`) = `bg-brand-soft` (+ `border-brand` สำหรับ chip)
+- **สถานะรอ** (ปุ่มรออนุมัติ, badge รออนุมัติ, ตัวเลขบนเฟือง) = `bg-highlight text-highlight-foreground` · ยกเลิก = `danger*` · ออกแล้ว = `border-line text-muted`
+- **ใส่สีเพิ่มต้องใช้ token จากโลโก้เท่านั้น** (`brand`, `brand-soft`, `highlight`) และใช้เป็นจุดเน้น ไม่ใช่พื้นใหญ่ของหน้า
 - **ลิงก์ในข้อความต้องมีเส้นใต้** (`underline underline-offset-4`) เพราะ accent เป็นสีเดียวกับตัวอักษร ถ้าไม่มีเส้นใต้จะดูไม่ออกว่ากดได้
 - **สถานะต้องไม่สื่อด้วยสีอย่างเดียว** (ใน monochrome ทำไม่ได้อยู่แล้ว) ให้ใช้ข้อความ ไอคอน หรือรูปทรง (ขอบ/พื้น) ประกอบ
-- error และแบนเนอร์ยกเลิกใช้ `danger*` เท่านั้น เป็นสีเดียวในแอปที่ไม่ใช่ขาวดำ
+- error และแบนเนอร์ยกเลิกใช้ `danger*` เท่านั้น
 - **focus ring** = `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent`
 
 - **ธีม 3 แบบ (ตามระบบ / สว่าง / มืด):**
@@ -592,7 +610,7 @@ token แต่ละตัว**เขียนครั้งเดียว**�
 | `@modal/page.jsx`, `@modal/default.jsx`, `@modal/[...catchAll]/page.jsx` | คืน `null` เพื่อปิด modal เมื่อไปหน้าอื่น |
 
 - ตัวฟอร์มอยู่ใน server component ชิ้นเดียว (`components/party/create-party.jsx`, `components/account/edit-profile.jsx`) ที่ทั้ง 2 แบบเรียกใช้ จึงมีฟอร์มเดียวให้ดูแล
-- `Modal` (`components/ui/modal.jsx`): `role="dialog" aria-modal="true"`, ปิดได้ด้วย Esc, คลิกฉากหลัง และปุ่ม ✕ ล็อก scroll ของ body และคืน focus เมื่อปิด มือถือเต็มจอ ส่วน `md` ขึ้นไปเป็นกล่อง `max-w-xl rounded-3xl`
+- `Modal` (`components/ui/modal.jsx`): `role="dialog" aria-modal="true"`, ปิดได้ด้วย Esc, คลิกฉากหลัง และปุ่ม ✕ ล็อก scroll ของ body, ใส่ `inert` ให้ลูกตัวอื่นของ `<body>` ตอนเปิด (Tab ไม่หลุดออกนอก sheet) และคืน focus เมื่อปิด มือถือเต็มจอ ส่วน `md` ขึ้นไปเป็นกล่อง `max-w-xl rounded-3xl`
 - **เพิ่ม modal ใหม่ต้องทำครบ 4 ไฟล์** ตามตารางด้านบน และฟอร์มที่ปิด modal เองหลังบันทึกต้องใช้ `closeHref` เดียวกับ `Modal` ห้ามใช้ `router.back()` อย่างเดียว
 - **ฟอร์มใน modal ต้องมี "ยกเลิก" และ "บันทึก"** (ดู `EditProfileForm`): ไม่บันทึกอะไรจนกว่าจะกดบันทึก (รูปที่เลือกเป็นแค่ preview), ปุ่มบันทึกกดไม่ได้จนกว่าจะมีการแก้ไข และ ยกเลิก / ✕ / Esc / คลิกฉากหลัง ปิดโดยไม่บันทึก
 
@@ -749,7 +767,7 @@ npm run dev          # http://localhost:3000
 10. ~~Boot splash บังเนื้อหาทุกครั้งที่โหลดหน้าเต็ม~~ แก้แล้ว: แสดงเฉพาะเมื่อโหลดเกิน 1 วินาที (เดิม: อย่างน้อย 0.7 วินาทีทุกครั้ง)
 11. ~~มือถือ: guest ไม่มีที่เปลี่ยนธีม~~ แก้แล้ว: แถบบนมือถือของหน้า `/` มีเมนู ≡ (หน้าอื่นบนมือถือยังไม่มีแถบบน)
 12. ~~`EditProfileForm` เรียก `router.back()` เสมอ~~ แก้แล้ว: modal ที่เปิดจาก URL ตรงส่ง `closeHref="/account"` ต่อไปถึงฟอร์ม
-13. **`Modal` ไม่ขัง focus:** กด Tab แล้วออกไปที่หน้าข้างหลังได้
+13. ~~`Modal` ไม่ขัง focus~~ แก้แล้ว: เนื้อหาข้างหลังเป็น `inert` ตอน modal เปิด
 14. ~~ปุ่ม "เข้าสู่ระบบ" บนแถบบนมือถือตัด 2 บรรทัด~~ แก้แล้ว (`whitespace-nowrap`)
 
 ---
