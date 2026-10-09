@@ -209,3 +209,27 @@ h2 {
     animation: brand-pulse 1.4s ease-in-out infinite;
   }
 }
+
+/* BootSplash: hidden at first, revealed only if the page is still waiting
+   for its scripts after 1 second (see components/boot-splash.jsx). */
+@keyframes boot-splash-reveal {
+  to { visibility: visible; opacity: 1; }
+}
+
+.boot-splash {
+  visibility: hidden;
+  opacity: 0;
+  animation: boot-splash-reveal 200ms ease-out 1s forwards;
+}
+
+/* Leaving after it was shown: its own fade, since the reveal animation's
+   end state would override a plain opacity class. */
+@keyframes boot-splash-hide {
+  from { visibility: visible; opacity: 1; }
+  to { visibility: hidden; opacity: 0; }
+}
+
+.boot-splash.is-leaving {
+  pointer-events: none;
+  animation: boot-splash-hide 300ms ease-out forwards;
+}
