@@ -3,9 +3,7 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from '@/lib/auth/actions'
-import FormField from '@/components/ui/FormField'
-import Button from '@/components/ui/Button'
-import AlertMessage from '@/components/ui/AlertMessage'
+import { AuthDivider, AuthShell, authButtonClass, authInputClass } from '@/components/auth/AuthShell'
 import { safeNextPath } from '@/lib/auth/next-path'
 
 /**
@@ -46,62 +44,50 @@ export default function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-t-4 border-line border-t-brand bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">เข้าสู่ระบบ</h1>
-        <p className="mt-2 text-sm text-muted">
-          เข้าสู่บัญชีเพื่อเริ่มใช้งาน MaTee
-        </p>
+    <AuthShell title="เข้าสู่ระบบด้วยบัญชี MaTee">
+      <form onSubmit={handleSubmit} className="grid gap-3">
+        <input
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          placeholder="อีเมล"
+          aria-label="Email"
+          required
+          className={authInputClass}
+        />
+        <input
+          name="password"
+          type="password"
+          value={form.password}
+          onChange={handleChange}
+          autoComplete="current-password"
+          placeholder="รหัสผ่าน"
+          aria-label="Password"
+          required
+          className={authInputClass}
+        />
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <label className="flex flex-col gap-2 text-sm">
-            Email
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              autoComplete="email"
-              required
-              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            />
-          </label>
+        {error ? (
+          <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
-          <label className="flex flex-col gap-2 text-sm">
-            Password
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              autoComplete="current-password"
-              required
-              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            />
-          </label>
+        <button type="submit" disabled={loading} className={`${authButtonClass} mt-1`}>
+          {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+        </button>
+      </form>
 
-          {error ? (
-            <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          ) : null}
+      <AuthDivider />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
-          >
-            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted">
-          ยังไม่มีบัญชี?{' '}
-          <Link href="/register" className="font-medium text-accent underline">
-            สมัครสมาชิก
-          </Link>
-        </p>
-      </section>
-    </main>
+      <Link
+        href="/register"
+        className="grid h-14 place-items-center rounded-2xl border border-line bg-card text-base font-medium hover:border-accent"
+      >
+        สมัครสมาชิก
+      </Link>
+    </AuthShell>
   )
 }

@@ -4,6 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import {
+  AuthDivider,
+  AuthShell,
+  authButtonClass,
+  authInputClass,
+} from "@/components/auth/AuthShell";
 import { signUp } from "@/lib/auth/actions";
 
 export default function RegisterForm() {
@@ -49,78 +55,66 @@ export default function RegisterForm() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl border border-t-4 border-line border-t-brand bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">สมัครสมาชิก</h1>
-        <p className="mt-2 text-sm text-muted">
-          สร้างบัญชีเพื่อเริ่มใช้งาน MaTee
-        </p>
+    <AuthShell title="สร้างบัญชี MaTee">
+      <form onSubmit={handleSubmit} className="grid gap-3">
+        <input
+          name="displayName"
+          value={form.displayName}
+          onChange={handleChange}
+          maxLength={40}
+          placeholder="ชื่อที่แสดง"
+          aria-label="ชื่อที่แสดง"
+          required
+          className={authInputClass}
+        />
+        <input
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          placeholder="อีเมล"
+          aria-label="Email"
+          required
+          className={authInputClass}
+        />
+        <input
+          name="password"
+          type="password"
+          value={form.password}
+          onChange={handleChange}
+          autoComplete="new-password"
+          minLength={8}
+          placeholder="รหัสผ่าน (อย่างน้อย 8 ตัว)"
+          aria-label="Password"
+          required
+          className={authInputClass}
+        />
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <label className="flex flex-col gap-2 text-sm">
-            ชื่อที่แสดง
-            <input
-              name="displayName"
-              value={form.displayName}
-              onChange={handleChange}
-              maxLength={40}
-              required
-              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            />
-          </label>
+        {error ? (
+          <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
+        {notice ? (
+          <p role="status" className="rounded-xl bg-soft px-3 py-2 text-sm text-soft-foreground">
+            {notice}
+          </p>
+        ) : null}
 
-          <label className="flex flex-col gap-2 text-sm">
-            Email
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            />
-          </label>
+        <button type="submit" disabled={loading} className={`${authButtonClass} mt-1`}>
+          {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
+        </button>
+      </form>
 
-          <label className="flex flex-col gap-2 text-sm">
-            Password
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              minLength={8}
-              required
-              className="rounded-xl border border-line bg-background px-3 py-2 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            />
-          </label>
+      <AuthDivider />
 
-          {error ? (
-            <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          ) : null}
-          {notice ? (
-            <p role="status" className="rounded-xl bg-soft px-3 py-2 text-sm text-soft-foreground">
-              {notice}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-foreground disabled:opacity-60"
-          >
-            {loading ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted">
-          มีบัญชีอยู่แล้ว?{" "}
-          <Link href="/login" className="font-medium text-accent underline">
-            เข้าสู่ระบบ
-          </Link>
-        </p>
-      </section>
-    </main>
+      <Link
+        href="/login"
+        className="grid h-14 place-items-center rounded-2xl border border-line bg-card text-base font-medium hover:border-accent"
+      >
+        มีบัญชีอยู่แล้ว? เข้าสู่ระบบ
+      </Link>
+    </AuthShell>
   );
 }

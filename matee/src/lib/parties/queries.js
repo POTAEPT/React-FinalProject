@@ -46,6 +46,7 @@ function toParty(row, owner, counts) {
     startMs: start,
     endMs: end,
     hostName: owner?.display_name ?? "ไม่ระบุชื่อ",
+    hostAvatarUrl: owner?.avatar_url ?? null,
     hostBanned: Boolean(owner?.banned_at),
     full: row.confirmed_count >= row.max_members,
     started: start <= Date.now(),
@@ -94,6 +95,9 @@ export async function listParties({
   q = "",
   category = "",
   availability = "open",
+  after = "",
+  before = "",
+  host = "",
 } = {}) {
   if (!getSupabaseEnv()) {
     return { ok: false, reason: "unconfigured", parties: [] };
@@ -110,6 +114,14 @@ export async function listParties({
 
   if (category) {
     query = query.eq("category", category);
+  }
+
+  if (after) {
+    query = query.gte("event_date", after);
+  }
+
+  if (before) {
+    query = query.lte("event_date", before);
   }
 
   const { data, error } = await query;
@@ -130,6 +142,10 @@ export async function listParties({
     }
 
     if (!matchesSearch(party, q)) {
+      return false;
+    }
+
+    if (host && !party.hostName.toLocaleLowerCase("th").includes(host.toLocaleLowerCase("th"))) {
       return false;
     }
 

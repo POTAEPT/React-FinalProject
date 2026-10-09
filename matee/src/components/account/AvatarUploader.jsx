@@ -4,10 +4,10 @@ import Image from 'next/image'
 import { uploadAvatar } from '@/lib/avatar/actions'
 
 /**
- * อธิบาย: Component สำหรับเปลี่ยนรูปโปรไฟล์
- * จะเรียกใช้ Action ด้านบนเพื่ออัปโหลด และเปลี่ยนพรีวิวทันที
+ * Avatar for the profile header. The whole avatar is the "change photo"
+ * control: tapping it opens the file picker and the preview updates at once.
  */
-export default function AvatarUploader({ userId, currentAvatarUrl }) {
+export default function AvatarUploader({ userId, currentAvatarUrl, name = '' }) {
   const [previewUrl, setPreviewUrl] = useState(currentAvatarUrl)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -24,28 +24,41 @@ export default function AvatarUploader({ userId, currentAvatarUrl }) {
     if (uploadError) {
       setError(uploadError)
     } else {
-      setPreviewUrl(publicUrl) // เปลี่ยนรูปแสดงผลทันที
+      setPreviewUrl(publicUrl)
     }
     setLoading(false)
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative size-24 overflow-hidden rounded-full border-2 border-brand bg-soft">
+    <div className="flex flex-col items-end gap-2">
+      <label
+        className="press group relative block size-20 cursor-pointer overflow-hidden rounded-full bg-soft focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent"
+        title="เปลี่ยนรูปโปรไฟล์ (JPEG, PNG, WEBP สูงสุด 2MB)"
+      >
         {previewUrl ? (
-          <Image src={previewUrl} alt="Avatar" fill className="object-cover" />
+          <Image src={previewUrl} alt="" fill sizes="80px" className="object-cover" />
         ) : (
-          <div className="flex size-full items-center justify-center text-3xl text-soft-foreground">👤</div>
+          <span className="grid size-full place-items-center text-3xl font-medium text-soft-foreground">
+            {name.slice(0, 1)}
+          </span>
         )}
-        {loading && <div className="absolute inset-0 flex items-center justify-center bg-black/40"><span className="w-6 h-6 border-2 border-white rounded-full border-t-transparent animate-spin" /></div>}
-      </div>
-
-      <label className="cursor-pointer rounded-xl border border-line px-3 py-1.5 text-sm font-medium text-accent transition hover:bg-background focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
-        {loading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูปโปรไฟล์'}
-        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} disabled={loading} className="sr-only" />
+        <span className="absolute inset-x-0 bottom-0 bg-black/45 py-0.5 text-center text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100">
+          {loading ? 'กำลังอัปโหลด' : 'เปลี่ยนรูป'}
+        </span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleFileChange}
+          disabled={loading}
+          aria-label="เปลี่ยนรูปโปรไฟล์"
+          className="sr-only"
+        />
       </label>
-      <p className="text-xs text-muted">JPEG, PNG, WEBP · สูงสุด 2MB</p>
-      {error && <p role="alert" className="rounded-lg border border-danger-line bg-danger-bg px-2 py-1 text-xs text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg px-2 py-1 text-xs text-danger">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

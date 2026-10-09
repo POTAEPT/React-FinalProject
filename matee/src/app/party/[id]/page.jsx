@@ -81,11 +81,29 @@ export default async function PartyPage({ params }) {
   const actionState = memberActionState(party, viewer);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
-      <Link href="/" className="text-sm text-muted">
-        กลับไปหาตี้
-      </Link>
-      <article className="grid gap-6 rounded-2xl border border-line bg-card p-5 sm:p-6">
+    <main className="flex w-full flex-1 flex-col">
+      <div className="glass-card sticky top-0 z-[5] flex items-center gap-3 rounded-t-3xl border-b border-line px-4 py-3">
+        <Link
+          href="/"
+          aria-label="กลับไปหาตี้"
+          className="press grid size-9 place-items-center rounded-full hover:bg-background"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-5"
+          >
+            <path d="M19 12H5M11 6l-6 6 6 6" />
+          </svg>
+        </Link>
+        <p className="font-semibold">ตี้</p>
+      </div>
+      <article className="grid gap-6 border-b border-line px-4 py-5">
         {party.status === "cancelled" ? (
           <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
             เจ้าของตี้ยกเลิกตี้นี้แล้ว
@@ -145,7 +163,9 @@ export default async function PartyPage({ params }) {
           ตี้อื่นในหมวด {categoryLabel(party.category)}
         </Link>
       </article>
-      <PartyChatSection party={party} viewer={viewer} />
+      <div className="px-4 py-5">
+        <PartyChatSection party={party} viewer={viewer} />
+      </div>
     </main>
   );
 }
