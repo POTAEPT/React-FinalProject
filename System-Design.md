@@ -134,10 +134,10 @@ React-FinalProject/
         ├── middleware.js     ← จะเปลี่ยนเป็น proxy.js (ดู Known issues)
         ├── app/              routes (หัวข้อ 6)
         ├── components/
-        │   ├── ui/           ชิ้นพื้นฐาน: Button, FormField, AlertMessage
+        │   ├── ui/           ชิ้นพื้นฐาน: Button, FormField, AlertMessage, ConfirmDialog, TimeSelect
         │   ├── auth/         LoginForm, RegisterForm
         │   ├── account/      AvatarUploader, ProfileCard, ClaimsPanel, SignOutButton
-        │   ├── party/        JoinButton, ManageControls
+        │   ├── party/        JoinButton, ManageControls, PartyForm (ใช้ทั้ง /create และแก้ไขตี้)
         │   ├── chat/         PartyChat (client), PartyChatSection (server)
         │   └── party-card.jsx, party-feed.jsx, party-filters.jsx, site-header.jsx
         └── lib/
@@ -178,7 +178,7 @@ React-FinalProject/
 | `/party/[id]` | ทุกคน | Server + client ปุ่ม/แชท | รายละเอียด, ปุ่มตามสถานะ (`memberActionState`), แชท `#chat` (`chatAccess`) | ✅ |
 | `/create` | User | Server + client form | ฟอร์มตั้งตี้ + เช็คเวลาชน | ✅ |
 | `/my-party` | User | Server | agenda จัดกลุ่มตามวัน, ส่วน "ที่ผ่านมา", ปุ่มแชท, เฟือง + badge pending | ✅ |
-| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม | ยืนยัน/ปฏิเสธคำขอ, รายชื่อสมาชิก, ยกเลิกตี้ (dialog) | ✅ |
+| `/manage/[id]` | Host (คนอื่นได้ 404) | Server + client ปุ่ม/ฟอร์ม | ยืนยัน/ปฏิเสธคำขอ (ปฏิเสธมี dialog), รายชื่อสมาชิก, รายการ "ปฏิเสธแล้ว" ให้เปลี่ยนใจยืนยันได้, แก้ไขรายละเอียดตี้ (ก่อนตี้เริ่ม), ยกเลิกตี้ (dialog) | ✅ |
 | `/login` | Guest | Client form | ล็อกอินแล้วกลับไปที่ `?next=` | ✅ |
 | `/register` | Guest | Client form | สมัคร (display name, email, password) | ✅ |
 | `/account` | User | Server | โปรไฟล์, อัปโหลด avatar, claims ของ JWT, sign out | ✅ |
@@ -331,12 +331,18 @@ party_members                 party_messages
       │                          ▲                                         (update แถวเดิม)
       │ join (approve)            │ host ยืนยัน
       └──────────────► pending ───┤
-                          │       └ host ปฏิเสธ ──► rejected  (join ซ้ำไม่ได้จนกว่า host เปลี่ยน)
+                          │       └ host ปฏิเสธ ──► rejected  (ขอใหม่เองไม่ได้ · host เปลี่ยนใจกดยืนยันได้ใน /manage → confirmed)
                           └─leave/ยกเลิกคำขอ──► cancelled
 ```
 - **join ได้เมื่อ:** ไม่ใช่ host, ตี้ open, ยังไม่เริ่ม, ยังไม่เต็ม, ไม่เคยถูก reject และเวลาไม่ชน
 - **host ออกไม่ได้** ต้องยกเลิกทั้งตี้แทน
 - **ยืนยันคำขอ** ยังต้องผ่าน trigger capacity: ถ้าตี้เต็มจะยืนยันไม่ได้
+
+### 10.3.1 การแก้ไขตี้ (host, หน้า `/manage/[id]`)
+- แก้ได้เฉพาะตี้ที่ open และ**ยังไม่เริ่ม**
+- แก้ได้: ชื่อ, หมวด, สถานที่, รายละเอียด, จำนวนที่รับ (ห้ามต่ำกว่า `confirmed_count`), วิธีเข้าร่วม
+- วันที่/เวลา/ระยะเวลา: แก้ได้**เฉพาะตอนยังไม่มีคนอื่น** pending/confirmed และต้องไม่ชนกับตี้อื่นของ host (เช็คในแอป เพราะ trigger ของ `parties` เช็คเวลาชนเฉพาะตอน insert)
+- สลับ approve → public: คำขอที่ค้างยังเป็น pending รอ host ตัดสิน
 
 ### 10.4 เวลาชน (time conflict)
 - **Commitment** = แถวที่ pending/confirmed บนตี้ที่ open และยังไม่จบ (นับรวมตี้ที่เป็น host)
@@ -392,7 +398,9 @@ party_members                 party_messages
 | `not_member` | ไม่ได้เป็นสมาชิก (ส่งแชท, leave) |
 | `cancelled` / `started` / `full` | สถานะของตี้ไม่อนุญาต |
 | `rejected` | ถูกปฏิเสธแล้ว |
-| `left` | คนนั้นออกจากตี้ไปแล้ว (ตอน host ตัดสินคำขอ) |
+| `left` | คนนั้นยกเลิกคำขอ/ออกจากตี้ไปแล้ว (ตอน host ตัดสินคำขอ) |
+| `decided` | คำขอถูกตัดสินไปแล้ว (หน้าของ host ไม่อัปเดต) |
+| `schedule_locked` | แก้วันเวลาตี้ไม่ได้ เพราะมีคนเข้าร่วมหรือขอเข้าร่วมแล้ว |
 | `time_conflict` | เวลาชน |
 | `expired` | แชทหมดอายุ |
 | `not_allowed` | RLS ปฏิเสธ (`42501`) โดยไม่รู้สาเหตุแน่ชัด |
@@ -428,6 +436,7 @@ export async function doSomething(partyId, input) {
 | `createParty(input)` | `app/create/actions.js` | `/` |
 | `joinParty(id)`, `leaveParty(id)` | `lib/parties/member-actions.js` | `/`, `/party/[id]`, `/my-party` |
 | `decideRequest(memberId, 'confirmed'\|'rejected')`, `cancelParty(id)` | `lib/parties/member-actions.js` | ข้างบน + `/manage/[id]` |
+| `updateParty(partyId, input)` (ส่งเข้า PartyForm ด้วย `.bind(null, partyId)`) | `lib/parties/party-actions.js` | `/`, `/party/[id]`, `/manage/[id]`, `/my-party` |
 | `sendPartyMessage(id, body)` | `lib/chat/actions.js` | – (อัปเดตผ่าน Realtime) |
 | `uploadAvatar({ userId, file })` | `lib/avatar/actions.js` | – |
 | admin: `cancelPartyAsAdmin`, `deletePartyAsAdmin`, `setUserBannedAsAdmin`, `deleteMessageAsAdmin` | `lib/admin/actions.js` (branch 22) | `/`, `/admin/*`, `/party/[id]` |
@@ -582,7 +591,9 @@ export async function doSomething(partyId, input) {
 - ฟอร์ม: react-hook-form + `zodResolver` จาก `lib/parties/schema.js` และใช้ schema เดียวกันใน action
 - รูป avatar ใช้ `next/image` (`remotePatterns` ตั้งไว้แล้ว)
 - Accessibility: `aria-label` บนปุ่มไอคอน, `aria-invalid` บนช่องที่ผิด, `role="status"` สำหรับประกาศ, ตัวเลือกที่ "กดไม่ได้" ใช้ `disabled` หรือ `aria-disabled`
-- dialog ยืนยันใช้ `<dialog>` + `showModal()` (ดู `CancelPartyButton`)
+- การกระทำที่ย้อนไม่ได้หรือกระทบคนอื่น (ออกจากตี้, ยกเลิกคำขอ, ปฏิเสธคำขอ, ยกเลิกตี้) ต้องผ่าน `ConfirmDialog` (`components/ui/ConfirmDialog.jsx`) ส่วนการกระทำที่ย้อนได้ (เข้าร่วม, ยืนยันคำขอ) กดได้ทันที
+- action ที่เจอข้อมูลบนจอเก่ากว่า DB (คำขอถูกยกเลิกไปแล้ว, ตี้เต็มแล้ว) ให้เรียก `revalidatePath` ก่อนคืน error เพื่อให้หน้าเปลี่ยนเป็นสถานะจริงทันที (ดู `stale()` ใน `member-actions.js`)
+- ช่องเวลาใช้ `TimeSelect` (24 ชั่วโมง ทีละ 15 นาที) ห้ามใช้ `<input type="time">` เพราะแสดง AM/PM ตาม locale ของ browser
 
 ---
 
