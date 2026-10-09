@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { joinParty, leaveParty } from "@/lib/parties/member-actions";
 
 const primaryClass =
@@ -71,14 +72,15 @@ export function JoinButton({ partyId, state }) {
       break;
     case "confirmed":
       control = (
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => run(leaveParty)}
-          className={secondaryClass}
-        >
-          {isPending ? "กำลังออก..." : "ออกจากตี้"}
-        </button>
+        <ConfirmDialog
+          triggerLabel="ออกจากตี้"
+          triggerClassName={secondaryClass}
+          title="ออกจากตี้นี้?"
+          description="ที่นั่งของคุณจะว่างให้คนอื่น และแชทของตี้จะปิดสำหรับคุณทันที ถ้าตี้ยังไม่เต็มและยังไม่เริ่ม กลับมาเข้าร่วมใหม่ได้"
+          confirmLabel="ออกจากตี้"
+          pendingLabel="กำลังออก..."
+          onConfirm={() => leaveParty(partyId)}
+        />
       );
       break;
     case "pending":
@@ -87,22 +89,28 @@ export function JoinButton({ partyId, state }) {
           <p className="rounded-xl bg-highlight px-4 py-2.5 text-center text-sm font-medium text-highlight-foreground">
             รอเจ้าของตี้อนุมัติ
           </p>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => run(leaveParty)}
-            className={secondaryClass}
-          >
-            {isPending ? "กำลังยกเลิก..." : "ยกเลิกคำขอ"}
-          </button>
+          <ConfirmDialog
+            triggerLabel="ยกเลิกคำขอ"
+            triggerClassName={secondaryClass}
+            title="ยกเลิกคำขอเข้าร่วม?"
+            description="คำขอจะหายจากรายการของเจ้าของตี้ และแชทของตี้จะปิดสำหรับคุณ ส่งคำขอใหม่ได้ภายหลังถ้าตี้ยังไม่เริ่ม"
+            confirmLabel="ยกเลิกคำขอ"
+            pendingLabel="กำลังยกเลิก..."
+            onConfirm={() => leaveParty(partyId)}
+          />
         </div>
       );
       break;
     case "rejected":
       control = (
-        <button type="button" disabled className={disabledClass}>
-          ถูกปฏิเสธ
-        </button>
+        <div className="grid gap-2">
+          <button type="button" disabled className={disabledClass}>
+            ถูกปฏิเสธ
+          </button>
+          <p className="text-sm text-muted">
+            เจ้าของตี้ปฏิเสธคำขอนี้แล้ว ส่งคำขอใหม่เองไม่ได้ เว้นแต่เจ้าของตี้จะเปลี่ยนใจและยืนยันให้
+          </p>
+        </div>
       );
       break;
     case "ended":

@@ -207,8 +207,9 @@ export async function leaveParty(partyId) {
   return { ok: true, status: "cancelled" };
 }
 
-// Host only: confirm or reject a request. Confirming still goes through the
-// capacity trigger, so a full party refuses it.
+// Host only: confirm or reject a request, or confirm someone rejected earlier.
+// Confirming still goes through the capacity and time-conflict triggers, so a
+// full party, or a person now busy at that time, refuses it.
 export async function decideRequest(memberId, decision) {
   if (decision !== "confirmed" && decision !== "rejected") {
     return fail("invalid", "คำสั่งไม่ถูกต้อง");
@@ -262,13 +263,18 @@ export async function decideRequest(memberId, decision) {
     return stale(party.id, fail("cancelled", "ตี้นี้ถูกยกเลิกแล้ว"));
   }
 
-  // Only pending requests are decided here. Anything else means the host's page
-  // is out of date: the person withdrew, or the request was already decided.
+  // Allowed moves: pending -> confirmed or rejected, and rejected -> confirmed
+  // (the host changes their mind). Anything else means the host's page is out
+  // of date: the person withdrew, or the request was already decided.
   if (member.status === "cancelled") {
     return stale(party.id, fail("left", "คนนี้ยกเลิกคำขอไปแล้ว"));
   }
 
-  if (member.status !== "pending") {
+  const allowed =
+    member.status === "pending" ||
+    (member.status === "rejected" && decision === "confirmed");
+
+  if (!allowed) {
     return stale(party.id, fail("decided", "คำขอนี้ถูกตัดสินไปแล้ว"));
   }
 

@@ -5,14 +5,17 @@ import { notFound } from "next/navigation";
 import {
   CancelPartyButton,
   DecisionButtons,
+  UndoRejectButton,
 } from "@/components/party/ManageControls";
+import { PartyForm } from "@/components/party/PartyForm";
 import { joinModeLabel } from "@/lib/parties/categories";
+import { updateParty } from "@/lib/parties/party-actions";
 import {
   getParty,
   getViewerMembership,
   listPartyMembers,
 } from "@/lib/parties/queries";
-import { formatEventDate, formatTimeRange } from "@/lib/parties/time";
+import { bangkokToday, formatEventDate, formatTimeRange } from "@/lib/parties/time";
 
 const partyIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -64,7 +67,16 @@ export default async function ManagePartyPage({ params }) {
   const { members } = await listPartyMembers(id);
   const pending = members.filter((member) => member.status === "pending");
   const confirmed = members.filter((member) => member.status === "confirmed");
+  const rejected = members.filter((member) => member.status === "rejected");
   const cancelled = party.status === "cancelled";
+  // Editing stops once the party starts; the schedule locks once anyone else
+  // has joined or asked to join (QA-1).
+  const editable = !cancelled && !party.started;
+  const scheduleLocked = members.some(
+    (member) =>
+      member.userId !== party.ownerId &&
+      (member.status === "pending" || member.status === "confirmed"),
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
@@ -113,12 +125,63 @@ export default async function ManagePartyPage({ params }) {
           {confirmed.map((member) => (
             <MemberRow key={member.id} member={member}>
               {member.userId === party.ownerId ? (
-                <span className="text-sm text-muted">เจ้าของตี้</span>
+                <span className="rounded-full bg-soft px-2 py-0.5 text-xs font-medium text-soft-foreground">
+                  เจ้าของตี้
+                </span>
               ) : null}
             </MemberRow>
           ))}
         </ul>
       </section>
+
+      {rejected.length ? (
+        <section aria-labelledby="rejected-title" className="grid gap-2 rounded-2xl border border-line bg-card p-5">
+          <h2 id="rejected-title" className="text-lg font-semibold">
+            ปฏิเสธแล้ว ({rejected.length})
+          </h2>
+          <p className="text-sm text-muted">
+            คนกลุ่มนี้ส่งคำขอใหม่เองไม่ได้ ถ้าเปลี่ยนใจ กดยืนยันให้เข้าตี้ได้เลย
+          </p>
+          <ul className="divide-y divide-line">
+            {rejected.map((member) => (
+              <MemberRow key={member.id} member={member}>
+                {cancelled ? null : (
+                  <UndoRejectButton memberId={member.id} name={member.displayName} />
+                )}
+              </MemberRow>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {editable ? (
+        <details className="group rounded-2xl border border-line bg-card p-5">
+          <summary className="cursor-pointer text-lg font-semibold">แก้ไขรายละเอียดตี้</summary>
+          <div className="mt-4">
+            <PartyForm
+              action={updateParty.bind(null, party.id)}
+              mode="edit"
+              minDate={bangkokToday()}
+              scheduleLocked={scheduleLocked}
+              minMembers={party.confirmedCount}
+              defaultValues={{
+                title: party.title,
+                category: party.category,
+                customCategory: party.customCategory ?? "",
+                eventDate: party.eventDate,
+                eventTime: String(party.eventTime).slice(0, 5),
+                durationMinutes: party.durationMinutes,
+                location: party.location,
+                maxMembers: party.maxMembers,
+                detail: party.detail,
+                joinMode: party.joinMode,
+              }}
+              submitLabel="บันทึกการแก้ไข"
+              pendingLabel="กำลังบันทึก..."
+            />
+          </div>
+        </details>
+      ) : null}
 
       {cancelled ? null : <CancelPartyButton partyId={party.id} title={party.title} />}
     </main>
