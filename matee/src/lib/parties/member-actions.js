@@ -23,6 +23,15 @@ function revalidateParty(partyId) {
   revalidatePath("/my-party");
 }
 
+// The screen the user acted on was out of date (the party filled up, was
+// cancelled, or a request was withdrawn meanwhile). Refresh the pages that show
+// it so the next render matches the database, and still return the reason.
+function stale(partyId, result) {
+  revalidateParty(partyId);
+  revalidatePath(`/manage/${partyId}`);
+  return result;
+}
+
 // The signed-in user and the party they are acting on, or a failure result.
 async function loadContext(partyId) {
   if (typeof partyId !== "string" || !uuidPattern.test(partyId)) {
@@ -78,7 +87,7 @@ async function joinErrorFromDatabase(error, supabase, userId, party) {
   }
 
   if (text.includes("Party is full")) {
-    return fail("full", "ตี้นี้เต็มแล้ว");
+    return stale(party.id, fail("full", "ตี้นี้เต็มแล้ว"));
   }
 
   if (error.code === "42501") {
@@ -108,15 +117,15 @@ export async function joinParty(partyId) {
   }
 
   if (party.status === "cancelled") {
-    return fail("cancelled", "เจ้าของตี้ยกเลิกตี้นี้แล้ว");
+    return stale(party.id, fail("cancelled", "เจ้าของตี้ยกเลิกตี้นี้แล้ว"));
   }
 
   if (partyStartMs(party.event_date, party.event_time) <= Date.now()) {
-    return fail("started", "ตี้นี้เริ่มไปแล้ว");
+    return stale(party.id, fail("started", "ตี้นี้เริ่มไปแล้ว"));
   }
 
   if (party.confirmed_count >= party.max_members) {
-    return fail("full", "ตี้นี้เต็มแล้ว");
+    return stale(party.id, fail("full", "ตี้นี้เต็มแล้ว"));
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -132,7 +141,7 @@ export async function joinParty(partyId) {
   }
 
   if (existing?.status === "rejected") {
-    return fail("rejected", "เจ้าของตี้ปฏิเสธคำขอของคุณแล้ว");
+    return stale(party.id, fail("rejected", "เจ้าของตี้ปฏิเสธคำขอของคุณแล้ว"));
   }
 
   if (existing?.status === "pending" || existing?.status === "confirmed") {
@@ -250,11 +259,17 @@ export async function decideRequest(memberId, decision) {
   }
 
   if (party.status === "cancelled") {
-    return fail("cancelled", "ตี้นี้ถูกยกเลิกแล้ว");
+    return stale(party.id, fail("cancelled", "ตี้นี้ถูกยกเลิกแล้ว"));
   }
 
+  // Only pending requests are decided here. Anything else means the host's page
+  // is out of date: the person withdrew, or the request was already decided.
   if (member.status === "cancelled") {
-    return fail("left", "คนนี้ออกจากตี้ไปแล้ว");
+    return stale(party.id, fail("left", "คนนี้ยกเลิกคำขอไปแล้ว"));
+  }
+
+  if (member.status !== "pending") {
+    return stale(party.id, fail("decided", "คำขอนี้ถูกตัดสินไปแล้ว"));
   }
 
   const { error } = await supabase
@@ -266,7 +281,7 @@ export async function decideRequest(memberId, decision) {
     const text = `${error.message ?? ""} ${error.details ?? ""}`;
 
     if (text.includes("Party is full")) {
-      return fail("full", "ตี้เต็มแล้ว ยืนยันเพิ่มไม่ได้");
+      return stale(party.id, fail("full", "ตี้เต็มแล้ว ยืนยันเพิ่มไม่ได้"));
     }
 
     if (text.includes("Time conflict")) {
