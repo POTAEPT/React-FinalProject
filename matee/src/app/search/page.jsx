@@ -4,6 +4,10 @@ import { PartyFilters } from "@/components/party-filters";
 import { PartyFeed } from "@/components/party-feed";
 import { readFeedFilters } from "@/lib/parties/filters";
 
+// Rendering: SSR (ตั้งใจ) — ผลค้นหาขึ้นกับ ?q= / หมวด / ช่วงวันที่ใน URL ที่มีได้
+// ไม่จำกัดแบบ และปุ่มบนการ์ดขึ้นกับคนที่ดู จึงสร้างหน้าล่วงหน้า (SSG/ISR) ไม่ได้
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "ค้นหา | MaTee",
 };

@@ -45,9 +45,8 @@ function toCardParty(item, hostName, hostAvatarUrl) {
 export default async function AccountPage({ searchParams }) {
   const session = await getSession()
 
-  // Guard in case the middleware misses: guests and banned users leave.
+  // Guard in case the proxy misses: guests leave.
   if (!session) redirect('/login')
-  if (session.profile.banned_at) redirect('/banned')
 
   const { tab: rawTab } = await searchParams
   const tab = rawTab === 'joined' ? 'joined' : 'hosted'

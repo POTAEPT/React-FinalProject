@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { useTheme } from "@/components/theme-provider";
 import { signOut } from "@/lib/auth/actions";
-import { THEME_COOKIE, THEMES } from "@/lib/theme";
+import { THEMES } from "@/lib/theme";
 
 const links = [
   { href: "/", label: "หาตี้", icon: "home" },
@@ -18,6 +19,8 @@ const searchLink = { href: "/search", label: "ค้นหา", icon: "search" }
 
 // Signed-in viewers also get Profile as a main section, as Threads does.
 const profileLink = { href: "/account", label: "โปรไฟล์", icon: "user" };
+// Admins only (account.isAdmin): last in the sidebar and the phone tab bar.
+const adminLink = { href: "/admin", label: "ผู้ดูแลระบบ", icon: "shield" };
 
 function isActive(pathname, href) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -38,6 +41,7 @@ function Icon({ name, className = "size-5", filled = false }) {
     moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
     monitor: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>,
     chevron: <path d="m6 9 6 6 6-6" />,
+    shield: <path d="M12 3 5 6v5c0 4.5 3 8.2 7 10 4-1.8 7-5.5 7-10V6z" />,
   };
 
   return (
@@ -58,27 +62,14 @@ function Icon({ name, className = "size-5", filled = false }) {
 
 const themeIcon = { system: "monitor", light: "sun", dark: "moon" };
 
-// Writes the choice where the server reads it (cookie, for the first paint)
-// and applies it at once through data-theme on <html>.
-function applyTheme(value) {
-  const root = document.documentElement;
-
-  if (value === "system") {
-    delete root.dataset.theme;
-  } else {
-    root.dataset.theme = value;
-  }
-
-  document.cookie = `${THEME_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
-}
-
 const menuRow =
   "press flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left text-base font-semibold hover:bg-background";
 
 // Threads-style menu: plain rows, "ธีม" drills into the theme
 // choices, and log out sits last in red below a divider.
 // account is null for guests, who only get the theme row.
-function MenuPanel({ account, theme, onTheme, close, onSignOut, signingOut }) {
+function MenuPanel({ account, close, onSignOut, signingOut }) {
+  const { theme, setTheme } = useTheme();
   const [view, setView] = useState("main");
 
   if (view === "theme") {
@@ -105,7 +96,7 @@ function MenuPanel({ account, theme, onTheme, close, onSignOut, signingOut }) {
                 type="button"
                 aria-pressed={selected}
                 aria-label={option.label}
-                onClick={() => onTheme(option.value)}
+                onClick={() => setTheme(option.value)}
                 className={`press grid h-11 place-items-center rounded-xl text-base font-semibold ${
                   selected
                     ? "flex-[2] border border-line bg-card shadow-sm"
@@ -215,7 +206,7 @@ function Dropdown({ label, button, children, placement = "below", variant = "pil
   );
 }
 
-function AccountMenu({ account, theme, onTheme, placement, variant, iconName = "menu" }) {
+function AccountMenu({ account, placement, variant, iconName = "menu" }) {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -247,8 +238,6 @@ function AccountMenu({ account, theme, onTheme, placement, variant, iconName = "
       {(close) => (
         <MenuPanel
           account={account}
-          theme={theme}
-          onTheme={onTheme}
           close={close}
           signingOut={signingOut}
           onSignOut={() => onSignOut(close)}
@@ -260,9 +249,9 @@ function AccountMenu({ account, theme, onTheme, placement, variant, iconName = "
 
 // The "=" button that opens the menu, shared by the sidebar and the phone
 // top bar. Signed-in viewers get theme and log out; guests only the theme.
-function MenuButton({ account, theme, onTheme, placement = "start" }) {
+function MenuButton({ account, placement = "start" }) {
   if (account) {
-    return <AccountMenu account={account} theme={theme} onTheme={onTheme} placement={placement} variant="icon" />;
+    return <AccountMenu account={account} placement={placement} variant="icon" />;
   }
 
   return (
@@ -272,7 +261,7 @@ function MenuButton({ account, theme, onTheme, placement = "start" }) {
       label="เมนู"
       button={<Icon name="menu" className="size-6" />}
     >
-      {(close) => <MenuPanel account={null} theme={theme} onTheme={onTheme} close={close} />}
+      {(close) => <MenuPanel account={null} close={close} />}
     </Dropdown>
   );
 }
@@ -293,18 +282,10 @@ function GuestSidebar() {
   );
 }
 
-// account: { displayName, avatarUrl } for a signed-in user, or null.
-// theme: the saved preference ("system" | "light" | "dark") from the cookie.
-export function SiteHeader({ account, theme: savedTheme }) {
+// account: { id, displayName, avatarUrl, isAdmin } for a signed-in user, or null.
+// The theme comes from ThemeProvider (useTheme) inside the menus.
+export function SiteHeader({ account }) {
   const pathname = usePathname();
-  const [theme, setTheme] = useState(savedTheme);
-
-  function onTheme(value) {
-    applyTheme(value);
-    setTheme(value);
-  }
-
-  const menuProps = { theme, onTheme };
   // Like Threads, the logo bar shows on the home tab only. Profile has its own
   // icon row (search, settings); other pages open with their own title.
   const showPhoneBar = pathname === "/";
@@ -313,7 +294,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
   const hideLabel = "max-[72rem]:hidden";
   const railOnly = "hidden max-[72rem]:grid";
   const navLinks = account
-    ? [links[0], searchLink, links[1], links[2], profileLink]
+    ? [links[0], searchLink, links[1], links[2], profileLink, ...(account.isAdmin ? [adminLink] : [])]
     : [links[0], searchLink, links[1], links[2]];
 
   return (
@@ -338,7 +319,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
               </span>
             </Link>
             <div className={hideLabel}>
-              <MenuButton account={account} {...menuProps} />
+              <MenuButton account={account} />
             </div>
           </div>
           <nav aria-label="เมนูหลัก">
@@ -359,7 +340,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
                           : "text-foreground hover:bg-background"
                       }`}
                     >
-                      <Icon name={link.icon} className="size-6 shrink-0" filled={active && (link.icon === "home" || link.icon === "user")} />
+                      <Icon name={link.icon} className="size-6 shrink-0" filled={active && ["home", "user", "shield"].includes(link.icon)} />
                       <span className={hideLabel}>{link.label}</span>
                     </Link>
                   </li>
@@ -370,7 +351,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
         </div>
         <div className="grid justify-items-center gap-2">
           <div className={railOnly}>
-            <MenuButton account={account} placement="above" {...menuProps} />
+            <MenuButton account={account} placement="above" />
           </div>
           {account ? null : (
             <div className={`w-full ${hideLabel}`}>
@@ -399,7 +380,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
         {/* The sidebar's ≡ menu is hidden on phones; this keeps the theme (and,
             when signed in, settings and log out) within reach. */}
         <div className="justify-self-start">
-          <MenuButton account={account} {...menuProps} />
+          <MenuButton account={account} />
         </div>
         <Link href="/" className="flex items-center gap-2 leading-tight">
           <BrandLogo variant="full" className="h-8 w-auto" priority />
@@ -432,7 +413,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
           >
             <Icon name="search" className="size-6" />
           </Link>
-          <AccountMenu account={account} placement="below" variant="icon" iconName="gear" {...menuProps} />
+          <AccountMenu account={account} placement="below" variant="icon" iconName="gear" />
         </div>
       ) : null}
 
@@ -445,6 +426,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
             { ...links[2], icon: "calendar" },
             { ...links[0], icon: "home" },
             profileLink,
+            ...(account?.isAdmin ? [adminLink] : []),
           ].map((link) => {
             const active = isActive(pathname, link.href);
 

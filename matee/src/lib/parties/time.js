@@ -73,3 +73,15 @@ export function formatEventDate(isoDate) {
     timeZone: "Asia/Bangkok",
   }).format(date);
 }
+
+// A timestamptz (e.g. profiles.created_at) as a Thai date, with the time when
+// withTime is set: "9 ต.ค. 2569" or "9 ต.ค. 2569 14:05".
+export function formatTimestamp(iso, { withTime = false } = {}) {
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+    timeZone: "Asia/Bangkok",
+  }).format(new Date(iso));
+}

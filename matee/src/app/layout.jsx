@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { BootSplash } from "@/components/boot-splash";
+import { ThemeProvider } from "@/components/theme-provider";
 import { loadAccount } from "@/lib/auth/account";
 import { readTheme, THEME_COOKIE } from "@/lib/theme";
 
@@ -19,6 +20,9 @@ export const metadata = {
   description: "หาตี้ทำกิจกรรมสำหรับนักศึกษา มช.",
 };
 
+// Rendering: layout อ่าน cookie (ธีม + บัญชีที่ล็อกอิน) ทุก request ทำให้ทุกหน้า
+// เป็น SSR หน้าที่ดึงข้อมูลหลักประกาศ dynamic = "force-dynamic" พร้อมเหตุผลไว้เองด้วย
+// (/, /search, /party/[id], /my-party, /manage/[id])
 export default async function RootLayout({ children, modal }) {
   const [cookieStore, account] = await Promise.all([cookies(), loadAccount()]);
   const theme = readTheme(cookieStore.get(THEME_COOKIE)?.value);
@@ -35,10 +39,10 @@ export default async function RootLayout({ children, modal }) {
         <noscript>
           <style>{"#boot-splash{display:none}"}</style>
         </noscript>
-        <AppShell account={account} theme={theme}>
-          {children}
-        </AppShell>
-        {modal}
+        <ThemeProvider initialTheme={theme}>
+          <AppShell account={account}>{children}</AppShell>
+          {modal}
+        </ThemeProvider>
       </body>
     </html>
   );

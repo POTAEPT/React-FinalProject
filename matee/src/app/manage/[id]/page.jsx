@@ -18,6 +18,10 @@ import {
 } from "@/lib/parties/queries";
 import { bangkokToday, formatEventDate, formatTimeRange } from "@/lib/parties/time";
 
+// Rendering: SSR (ตั้งใจ) — เฉพาะเจ้าของตี้ (ตรวจทุก request) และคิวคำขอต้อง
+// เป็นค่าล่าสุด หน้านี้ยัง refresh เองทุก 15 วินาที (<AutoRefresh>) เพื่อดึง SSR ใหม่
+export const dynamic = "force-dynamic";
+
 const partyIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -50,7 +54,7 @@ function MemberRow({ member, children }) {
 }
 
 // Host only. Anyone else, including other signed-in users, gets a 404.
-// Signed-out visitors are sent to /login by the middleware.
+// Signed-out visitors are sent to /login by the proxy (src/proxy.js).
 export default async function ManagePartyPage({ params }) {
   const { id } = await params;
 

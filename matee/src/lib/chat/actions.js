@@ -104,3 +104,57 @@ export async function sendPartyMessage(partyId, body) {
 
   return { ok: true, message: toMessage(data) };
 }
+
+// The host deletes a message in their own party's chat. Everyone with the chat
+// open drops it through the Realtime DELETE event. RLS ("owners delete any
+// message in their party") checks the same rule; admins delete from /admin.
+export async function deletePartyMessage(messageId) {
+  if (typeof messageId !== "string" || !uuidPattern.test(messageId)) {
+    return fail("not_found", "ไม่พบข้อความนี้");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return fail("unauthenticated", "เข้าสู่ระบบก่อน");
+  }
+
+  const { data: message, error: loadError } = await supabase
+    .from("party_messages")
+    .select("id, party_id, parties(owner_id)")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("load message to delete", loadError.message);
+    return fail("unknown", "ลบข้อความไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  if (!message) {
+    return fail("not_found", "ไม่พบข้อความนี้ อาจถูกลบไปแล้ว");
+  }
+
+  if (message.parties?.owner_id !== user.id) {
+    return fail("not_host", "เฉพาะเจ้าของตี้เท่านั้นที่ลบข้อความได้");
+  }
+
+  const { data, error } = await supabase
+    .from("party_messages")
+    .delete()
+    .eq("id", messageId)
+    .select("id");
+
+  if (error) {
+    console.error("delete message", error.message);
+    return fail("unknown", "ลบข้อความไม่สำเร็จ ลองอีกครั้ง");
+  }
+
+  if (!data.length) {
+    return fail("not_found", "ไม่พบข้อความนี้ อาจถูกลบไปแล้ว");
+  }
+
+  return { ok: true };
+}

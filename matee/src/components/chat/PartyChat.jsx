@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 
-import { sendPartyMessage } from "@/lib/chat/actions";
+import { DeleteMessageButton } from "@/components/chat/DeleteMessageButton";
+import { deletePartyMessage, sendPartyMessage } from "@/lib/chat/actions";
 import { MESSAGE_LIMIT, messageColumns, toMessage } from "@/lib/chat/message";
 import { createClient } from "@/lib/supabase/client";
 
@@ -67,8 +68,9 @@ function Avatar({ name, url }) {
 // Live chat for one party. The server decides who may see this panel and
 // passes the latest messages; this component subscribes to new and deleted
 // messages through Realtime (RLS filters inserts per subscriber) and sends
-// through sendPartyMessage.
-export function PartyChat({ partyId, currentUserId, initialMessages, notice = null }) {
+// through sendPartyMessage. canModerate (the host) adds a delete control to
+// every message.
+export function PartyChat({ partyId, currentUserId, initialMessages, notice = null, canModerate = false }) {
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState(null);
@@ -260,6 +262,14 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
                   >
                     {message.body}
                   </p>
+                  {canModerate ? (
+                    <DeleteMessageButton
+                      onDelete={() => deletePartyMessage(message.id)}
+                      onDeleted={() =>
+                        setMessages((current) => current.filter((item) => item.id !== message.id))
+                      }
+                    />
+                  ) : null}
                 </div>
               </li>
             );
