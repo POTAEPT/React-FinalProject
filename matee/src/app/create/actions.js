@@ -3,9 +3,15 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  findConflict,
+  getMyCommitments,
+  timeConflictResult,
+} from "@/lib/parties/my-commitments";
+import {
   createPartySchema,
   fieldErrorsFromZod,
 } from "@/lib/parties/schema";
+import { partyEndMs, partyStartMs } from "@/lib/parties/time";
 import { createClient } from "@/lib/supabase/server";
 
 function messageFromDatabase(error) {
@@ -19,7 +25,7 @@ function messageFromDatabase(error) {
     return "บัญชีนี้ยังไม่มีโปรไฟล์";
   }
 
-  if (error.code === "42501" || text.toLowerCase().includes("banned")) {
+  if (error.code === "42501") {
     return "บัญชีนี้สร้างตี้ไม่ได้";
   }
 
@@ -47,6 +53,16 @@ export async function createParty(input) {
   }
 
   const party = parsed.data;
+  const startMs = partyStartMs(party.eventDate, party.eventTime);
+  const endMs = partyEndMs(party.eventDate, party.eventTime, party.durationMinutes);
+  const conflictWith = async () =>
+    findConflict(await getMyCommitments(supabase, user.id), startMs, endMs);
+  const conflict = await conflictWith();
+
+  if (conflict) {
+    return timeConflictResult(conflict);
+  }
+
   const { data, error } = await supabase
     .from("parties")
     .insert({
@@ -64,6 +80,11 @@ export async function createParty(input) {
     })
     .select("id")
     .single();
+
+  if (error && `${error.message ?? ""} ${error.details ?? ""}`.includes("Time conflict")) {
+    // A race: the commitment appeared after our own check. Name it if we can.
+    return timeConflictResult(await conflictWith());
+  }
 
   if (error || !data) {
     return {

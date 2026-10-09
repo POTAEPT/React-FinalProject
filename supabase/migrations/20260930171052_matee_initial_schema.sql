@@ -853,9 +853,17 @@ alter publication supabase_realtime add table public.parties, public.party_messa
 -- Upload path: avatars/<user id>/<filename>
 -- ---------------------------------------------------------------------------
 
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'avatars', 
+  'avatars', 
+  true, 
+  2097152, -- 2 MB limit
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do update 
+set file_size_limit = 2097152, 
+    allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
 
 create policy "avatar images are public"
   on storage.objects for select
