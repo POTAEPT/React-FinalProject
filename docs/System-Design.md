@@ -507,7 +507,7 @@ export async function doSomething(partyId, input) {
 
 **แพทเทิร์น (ให้ใช้แบบเดียวกันเมื่อทำ #8)**
 1. Server Component โหลดข้อมูลชุดแรก แล้วส่งเป็น props ให้ Client Component
-2. Client subscribe ใน `useEffect` ด้วย browser client จาก `lib/supabase/client.js` ชื่อช่อง `<feature>:<id>`
+2. Client subscribe ใน `useEffect` ด้วย browser client จาก `lib/supabase/client.js` ชื่อช่อง `<feature>:<id>` · **ต้อง `await supabase.auth.getSession()` ก่อน `.channel(...).subscribe()` เสมอ** ไม่อย่างนั้น channel จะ join แบบ anon (client ยังโหลด session จาก cookie ไม่เสร็จ) แล้ว RLS ทำให้ไม่ได้รับ INSERT/UPDATE เลย (บั๊ก R-1 ที่เจอใน E2E 2026-10-10)
 3. **ประมาณ 3 วินาทีหลัง `SUBSCRIBED` ให้โหลดข้อมูลซ้ำ 1 ครั้ง** เพราะ Realtime ส่ง `SUBSCRIBED` ก่อนจะเริ่มส่ง `postgres_changes` จริงประมาณ 2–3 วินาที
 4. merge ข้อมูลตาม `id` ไม่ให้ซ้ำ
 5. cleanup: `supabase.removeChannel(channel)` และ `clearTimeout` เมื่อ unmount

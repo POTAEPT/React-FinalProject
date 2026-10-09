@@ -147,47 +147,67 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
       return { ...message, ...profile };
     }
 
-    const channel = supabase
-      .channel(`party-chat:${partyId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "party_messages",
-          filter: `party_id=eq.${partyId}`,
-        },
-        async (payload) => {
-          const message = await withProfile(payload.new);
+    // Realtime checks each INSERT against the select policy with the token the
+    // channel joined with. The browser client loads the session from the cookie
+    // asynchronously, so joining right away would join as anon, and anon may not
+    // read chat: no INSERT would ever arrive (DELETE skips RLS, so deletes did).
+    // Load the session first so the channel joins as the signed-in user.
+    let channel = null;
 
-          if (active) {
-            setMessages((current) => mergeMessages(current, message));
-          }
-        },
-      )
-      // Realtime cannot filter delete events by column, so every delete on the
-      // table arrives with its id only; drop it if it is one of ours.
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "party_messages" },
-        (payload) => {
-          const id = payload.old?.id;
+    async function subscribe() {
+      await supabase.auth.getSession();
 
-          if (id) {
-            setMessages((current) => current.filter((message) => message.id !== id));
+      if (!active) {
+        return;
+      }
+
+      channel = supabase
+        .channel(`party-chat:${partyId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "party_messages",
+            filter: `party_id=eq.${partyId}`,
+          },
+          async (payload) => {
+            const message = await withProfile(payload.new);
+
+            if (active) {
+              setMessages((current) => mergeMessages(current, message));
+            }
+          },
+        )
+        // Realtime cannot filter delete events by column, so every delete on the
+        // table arrives with its id only; drop it if it is one of ours.
+        .on(
+          "postgres_changes",
+          { event: "DELETE", schema: "public", table: "party_messages" },
+          (payload) => {
+            const id = payload.old?.id;
+
+            if (id) {
+              setMessages((current) => current.filter((message) => message.id !== id));
+            }
+          },
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && !catchUpTimer) {
+            catchUpTimer = setTimeout(catchUp, CATCH_UP_DELAY_MS);
           }
-        },
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED" && !catchUpTimer) {
-          catchUpTimer = setTimeout(catchUp, CATCH_UP_DELAY_MS);
-        }
-      });
+        });
+    }
+
+    subscribe();
 
     return () => {
       active = false;
       clearTimeout(catchUpTimer);
-      supabase.removeChannel(channel);
+
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [partyId, profiles]);
 
