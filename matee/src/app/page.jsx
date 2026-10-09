@@ -1,7 +1,6 @@
-import { Suspense } from "react";
-
+import { PartyComposer } from "@/components/party-composer";
 import { PartyFeed } from "@/components/party-feed";
-import { PartyFilters } from "@/components/party-filters";
+import { loadAccount } from "@/lib/auth/account";
 import { readFeedFilters } from "@/lib/parties/filters";
 
 export const metadata = {
@@ -9,22 +8,22 @@ export const metadata = {
 };
 
 export default async function Home({ searchParams }) {
-  const filters = await readFeedFilters(searchParams);
+  const [filters, account] = await Promise.all([
+    readFeedFilters(searchParams),
+    loadAccount(),
+  ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8">
-      <div className="grid gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">หาตี้</h1>
-        <p className="max-w-xl text-sm leading-6 text-muted">
-          ตี้ที่ยังเปิดรับและยังไม่เริ่ม เลือกหมวดหรือค้นจากชื่อกับสถานที่
-        </p>
+    <main className="flex w-full flex-1 flex-col">
+      <h1 className="sr-only">
+        หาตี้
+      </h1>
+      <div className="border-b border-line">
+        <PartyComposer account={account} />
       </div>
-      <Suspense fallback={<div className="h-16 rounded-xl bg-line/60" />}>
-        <PartyFilters />
-      </Suspense>
       <PartyFeed
         filters={filters}
-        emptyMessage="ยังไม่มีตี้ที่ตรงกับตัวกรอง ลองล้างคำค้นหรือตั้งตี้ใหม่"
+        emptyMessage="ยังไม่มีตี้ที่ตรงกับตัวกรอง ลองเปลี่ยนหมวดหรือตั้งตี้ใหม่"
       />
     </main>
   );
