@@ -18,6 +18,8 @@ const searchLink = { href: "/search", label: "ค้นหา", icon: "search" }
 
 // Signed-in viewers also get Profile as a main section, as Threads does.
 const profileLink = { href: "/account", label: "โปรไฟล์", icon: "user" };
+// Admins only (account.isAdmin): last in the sidebar and the phone tab bar.
+const adminLink = { href: "/admin", label: "ผู้ดูแลระบบ", icon: "shield" };
 
 function isActive(pathname, href) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -38,6 +40,7 @@ function Icon({ name, className = "size-5", filled = false }) {
     moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
     monitor: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></>,
     chevron: <path d="m6 9 6 6 6-6" />,
+    shield: <path d="M12 3 5 6v5c0 4.5 3 8.2 7 10 4-1.8 7-5.5 7-10V6z" />,
   };
 
   return (
@@ -132,11 +135,6 @@ function MenuPanel({ account, theme, onTheme, close, onSignOut, signingOut }) {
           <Link href="/account/edit" onClick={close} className={menuRow}>
             ตั้งค่าโปรไฟล์
           </Link>
-          {account.isAdmin ? (
-            <Link href="/admin" onClick={close} className={menuRow}>
-              ผู้ดูแลระบบ
-            </Link>
-          ) : null}
           <div className="mx-2 my-1 border-t border-line" />
           <button
             type="button"
@@ -318,7 +316,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
   const hideLabel = "max-[72rem]:hidden";
   const railOnly = "hidden max-[72rem]:grid";
   const navLinks = account
-    ? [links[0], searchLink, links[1], links[2], profileLink]
+    ? [links[0], searchLink, links[1], links[2], profileLink, ...(account.isAdmin ? [adminLink] : [])]
     : [links[0], searchLink, links[1], links[2]];
 
   return (
@@ -364,7 +362,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
                           : "text-foreground hover:bg-background"
                       }`}
                     >
-                      <Icon name={link.icon} className="size-6 shrink-0" filled={active && (link.icon === "home" || link.icon === "user")} />
+                      <Icon name={link.icon} className="size-6 shrink-0" filled={active && ["home", "user", "shield"].includes(link.icon)} />
                       <span className={hideLabel}>{link.label}</span>
                     </Link>
                   </li>
@@ -450,6 +448,7 @@ export function SiteHeader({ account, theme: savedTheme }) {
             { ...links[2], icon: "calendar" },
             { ...links[0], icon: "home" },
             profileLink,
+            ...(account?.isAdmin ? [adminLink] : []),
           ].map((link) => {
             const active = isActive(pathname, link.href);
 
