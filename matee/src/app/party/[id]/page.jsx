@@ -158,7 +158,7 @@ export default async function PartyPage({ params }) {
         )}
         <Link
           href={`/search?category=${party.category}`}
-          className="text-sm font-medium text-accent"
+          className="w-fit text-sm font-medium text-accent underline underline-offset-4"
         >
           ตี้อื่นในหมวด {categoryLabel(party.category)}
         </Link>
