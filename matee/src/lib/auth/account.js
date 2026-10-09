@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -31,6 +32,9 @@ export const loadAccount = cache(async () => {
       avatarUrl: profile?.avatar_url ?? null,
     };
   } catch (error) {
+    // Let Next handle its own signals (e.g. cookies() during a static
+    // render attempt) instead of logging them as failures.
+    unstable_rethrow(error);
     console.error("load account", error);
     return null;
   }

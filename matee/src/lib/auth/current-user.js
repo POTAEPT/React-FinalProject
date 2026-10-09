@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -20,6 +21,9 @@ export const getCurrentUser = cache(async () => {
 
     return user ?? null;
   } catch (error) {
+    // Let Next handle its own signals (e.g. cookies() during a static
+    // render attempt) instead of logging them as failures.
+    unstable_rethrow(error);
     console.error("get current user", error);
     return null;
   }
