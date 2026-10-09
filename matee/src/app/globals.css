@@ -22,10 +22,35 @@
   --danger-foreground: #ffffff;
   --danger-bg: #fde9e2;
   --danger-line: #f2b8a5;
+  /* Native date pickers and scrollbars follow the active scheme. */
+  color-scheme: light;
+}
+
+/*
+ * Dark tokens apply when the viewer picked dark in the theme menu
+ * (data-theme="dark" on <html>, see app/layout.jsx), or follows the system
+ * and the system is dark. Keep the two blocks identical.
+ */
+:root[data-theme="dark"] {
+  --background: #0f2627;
+  --card: #163535;
+  --foreground: #fff0c5;
+  --muted: #9fbfbd;
+  --line: #2a4f4f;
+  --accent: #8ad6d1;
+  --accent-foreground: #0f2627;
+  --soft: #1f4f4f;
+  --soft-foreground: #8ad6d1;
+  --highlight-foreground: #0f2627;
+  --danger: #ffb4a2;
+  --danger-foreground: #0f2627;
+  --danger-bg: #3a1e1a;
+  --danger-line: #7a3a2e;
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #0f2627;
     --card: #163535;
     --foreground: #fff0c5;
@@ -40,6 +65,7 @@
     --danger-foreground: #0f2627;
     --danger-bg: #3a1e1a;
     --danger-line: #7a3a2e;
+    color-scheme: dark;
   }
 }
 
@@ -66,15 +92,4 @@
 body {
   background: var(--background);
   color: var(--foreground);
-}
-
-/* Native date/time pickers and scrollbars follow the active scheme. */
-:root {
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
 }
