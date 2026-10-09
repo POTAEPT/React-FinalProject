@@ -7,7 +7,7 @@ import { updateDisplayName } from '@/lib/auth/profile-actions'
 
 // Threads-style edit sheet: a labelled row per field and a full-width Done.
 // The photo saves as soon as it is picked; the name saves on Done.
-export function EditProfileForm({ userId, displayName, email, avatarUrl }) {
+export function EditProfileForm({ userId, displayName, email, avatarUrl, closeHref }) {
   const router = useRouter()
   const [name, setName] = useState(displayName)
   const [error, setError] = useState(null)
@@ -24,7 +24,12 @@ export function EditProfileForm({ userId, displayName, email, avatarUrl }) {
         return
       }
 
-      router.back()
+      // Same rule as Modal: a direct visit has no in-app page to go back to.
+      if (closeHref) {
+        router.replace(closeHref)
+      } else {
+        router.back()
+      }
       router.refresh()
     })
   }
