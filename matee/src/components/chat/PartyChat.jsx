@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 
+import { ChatBubblesSkeleton } from "@/components/page-skeletons";
 import { DeleteMessageButton } from "@/components/chat/DeleteMessageButton";
 import { deletePartyMessage, sendPartyMessage } from "@/lib/chat/actions";
 import { MESSAGE_LIMIT, messageColumns, toMessage } from "@/lib/chat/message";
@@ -89,6 +90,15 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
       ),
   );
   const listRef = useRef(null);
+  const topRef = useRef(null);
+  // A full first page means there may be older messages to load on scroll up.
+  const [hasOlder, setHasOlder] = useState(initialMessages.length >= MESSAGE_LIMIT);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  // scrollHeight - scrollTop before older messages were added; keeps the
+  // reader on the same message when they are prepended.
+  const anchorRef = useRef(null);
+  const newestRef = useRef(null);
+  const oldestAt = messages[0]?.createdAt ?? null;
 
   useEffect(() => {
     const supabase = createClient();
@@ -211,13 +221,81 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
     };
   }, [partyId, profiles]);
 
+  // Older messages load when the top of the list scrolls into view.
   useEffect(() => {
+    const node = topRef.current;
+    const root = listRef.current;
+
+    if (!hasOlder || loadingOlder || !node || !root || !oldestAt) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        observer.disconnect();
+        setLoadingOlder(true);
+
+        const { data, error } = await createClient()
+          .from("party_messages")
+          .select(messageColumns)
+          .eq("party_id", partyId)
+          .lt("created_at", oldestAt)
+          .order("created_at", { ascending: false })
+          .limit(MESSAGE_LIMIT);
+
+        if (error) {
+          setLoadingOlder(false);
+          setHasOlder(false);
+          return;
+        }
+
+        const older = (data ?? []).map(toMessage);
+
+        for (const message of older) {
+          if (message.displayName && !profiles.has(message.userId)) {
+            profiles.set(message.userId, {
+              displayName: message.displayName,
+              avatarUrl: message.avatarUrl,
+            });
+          }
+        }
+
+        anchorRef.current = root.scrollHeight - root.scrollTop;
+        setHasOlder(older.length >= MESSAGE_LIMIT);
+        setMessages((current) => older.reduce(mergeMessages, current));
+        setLoadingOlder(false);
+      },
+      { root, rootMargin: "80px" },
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [hasOlder, loadingOlder, oldestAt, partyId, profiles]);
+
+  // Stick to the bottom for new messages; keep position when older ones arrive.
+  useLayoutEffect(() => {
     const list = listRef.current;
 
-    if (list) {
+    if (!list) {
+      return;
+    }
+
+    const newest = messages[messages.length - 1]?.id ?? null;
+
+    if (anchorRef.current != null) {
+      list.scrollTop = list.scrollHeight - anchorRef.current;
+      anchorRef.current = null;
+    } else if (newest !== newestRef.current) {
       list.scrollTop = list.scrollHeight;
     }
-  }, [messages.length]);
+
+    newestRef.current = newest;
+  }, [messages]);
 
   function send() {
     const body = draft.trim();
@@ -261,6 +339,11 @@ export function PartyChat({ partyId, currentUserId, initialMessages, notice = nu
         aria-live="polite"
         className="grid max-h-96 gap-3 overflow-y-auto pr-1"
       >
+        {hasOlder ? (
+          <li ref={topRef} aria-hidden="true">
+            <ChatBubblesSkeleton count={2} />
+          </li>
+        ) : null}
         {messages.length === 0 ? (
           <li className="py-6 text-center text-sm text-muted">ยังไม่มีข้อความ เริ่มทักทายได้เลย</li>
         ) : (

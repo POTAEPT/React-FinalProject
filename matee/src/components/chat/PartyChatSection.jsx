@@ -1,8 +1,15 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
-import { PartyChat } from "@/components/chat/PartyChat";
+import { ChatBubblesSkeleton } from "@/components/page-skeletons";
 import { chatAccess } from "@/lib/chat/access";
 import { listPartyMessages } from "@/lib/chat/queries";
+
+// The live panel (Realtime client, send form) loads as its own chunk.
+const PartyChat = dynamic(
+  () => import("@/components/chat/PartyChat").then((module) => module.PartyChat),
+  { loading: () => <ChatBubblesSkeleton /> },
+);
 
 function Notice({ children }) {
   return (

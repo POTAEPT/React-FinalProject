@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ChatSkeleton } from "@/components/page-skeletons";
 import { PartyChatSection } from "@/components/chat/PartyChatSection";
 import { JoinButton } from "@/components/party/JoinButton";
 import {
@@ -171,7 +173,9 @@ export default async function PartyPage({ params }) {
         </Link>
       </article>
       <div className="px-4 py-5">
-        <PartyChatSection party={party} viewer={viewer} />
+        <Suspense fallback={<ChatSkeleton />}>
+          <PartyChatSection party={party} viewer={viewer} />
+        </Suspense>
       </div>
     </main>
   );
