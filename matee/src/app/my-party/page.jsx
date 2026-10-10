@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { LazySection } from "@/components/lazy-section";
+import { ListSkeleton } from "@/components/page-skeletons";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { categoryLabel } from "@/lib/parties/categories";
 import { listMyMemberships } from "@/lib/parties/my-commitments";
@@ -183,7 +185,9 @@ export default async function MyPartyPage() {
             ที่ผ่านมา ({past.reduce((total, group) => total + group.items.length, 0)})
           </summary>
           <div className="mt-4">
-            <Agenda groups={past} pendingCounts={pendingCounts} />
+            <LazySection fallback={<ListSkeleton rows={3} />}>
+              <Agenda groups={past} pendingCounts={pendingCounts} />
+            </LazySection>
           </div>
         </details>
       ) : null}

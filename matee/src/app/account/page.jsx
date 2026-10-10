@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 
 import Image from 'next/image'
 import SignOutButton from '@/components/account/SignOutButton'
-import { PartyCard } from '@/components/party-card'
+import { LazyPartyList } from '@/components/lazy-party-list'
 import { getSession } from '@/lib/auth/get-session'
 import { listMyMemberships } from '@/lib/parties/my-commitments'
 import { createClient } from '@/lib/supabase/server'
@@ -140,23 +140,19 @@ export default async function AccountPage({ searchParams }) {
       </nav>
 
       {shown.length ? (
-        <ul className="divide-y divide-line">
-          {shown.map((item) => {
+        <LazyPartyList
+          key={tab}
+          commitments={[]}
+          parties={shown.map((item) => {
             const owner = owners.get(item.partyId)
 
-            return (
-              <li key={item.memberId}>
-                <PartyCard
-                  party={toCardParty(
-                    item,
-                    item.isHost ? name : (owner?.display_name ?? 'ไม่ระบุชื่อ'),
-                    item.isHost ? profile.avatar_url : (owner?.avatar_url ?? null),
-                  )}
-                />
-              </li>
+            return toCardParty(
+              item,
+              item.isHost ? name : (owner?.display_name ?? 'ไม่ระบุชื่อ'),
+              item.isHost ? profile.avatar_url : (owner?.avatar_url ?? null),
             )
           })}
-        </ul>
+        />
       ) : (
         <p className="m-4 rounded-3xl border border-dashed border-line px-4 py-8 text-center text-sm leading-6 text-muted">
           {TABS.find((item) => item.value === tab).empty}

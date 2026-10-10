@@ -1,9 +1,17 @@
+import dynamic from "next/dynamic";
+
 import { loadAccount } from "@/lib/auth/account";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { createParty } from "@/app/create/actions";
-import { PartyForm } from "@/components/party/PartyForm";
+import { FormSkeleton } from "@/components/page-skeletons";
 import { addDays, bangkokToday } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+
+// The form (react-hook-form, zod) is its own chunk, with a skeleton while it loads.
+const PartyForm = dynamic(
+  () => import("@/components/party/PartyForm").then((module) => module.PartyForm),
+  { loading: () => <FormSkeleton fields={5} /> },
+);
 
 // The create-party form with its env and sign-in guards. Shared by the
 // /create page and the modal that intercepts it, so there is one form.

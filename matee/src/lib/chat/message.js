@@ -1,6 +1,7 @@
 // Shared by the server query, the Server Action and the client chat panel, so it
 // must not import a server-only module.
-export const MESSAGE_LIMIT = 50;
+// One page of chat: the first load, the catch-up, and each "older" load.
+export const MESSAGE_LIMIT = 20;
 export const messageColumns =
   "id, party_id, user_id, body, created_at, profiles(display_name, avatar_url)";
 

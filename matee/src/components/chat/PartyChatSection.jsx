@@ -1,8 +1,16 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
-import { PartyChat } from "@/components/chat/PartyChat";
+import { LazySection } from "@/components/lazy-section";
+import { ChatBubblesSkeleton } from "@/components/page-skeletons";
 import { chatAccess } from "@/lib/chat/access";
 import { listPartyMessages } from "@/lib/chat/queries";
+
+// The live panel (Realtime client, send form) loads as its own chunk.
+const PartyChat = dynamic(
+  () => import("@/components/chat/PartyChat").then((module) => module.PartyChat),
+  { loading: () => <ChatBubblesSkeleton /> },
+);
 
 function Notice({ children }) {
   return (
@@ -58,13 +66,15 @@ export async function PartyChatSection({ party, viewer }) {
               โหลดข้อความเก่าไม่สำเร็จ ข้อความใหม่จะยังแสดงตามปกติ
             </p>
           )}
-          <PartyChat
-            partyId={party.id}
-            currentUserId={viewer.user.id}
-            initialMessages={messages}
-            canModerate={viewer.user.id === party.ownerId}
-            notice={access.daysLeft ? `แชทจะหายไปใน ${access.daysLeft} วัน` : null}
-          />
+          <LazySection fallback={<ChatBubblesSkeleton />}>
+            <PartyChat
+              partyId={party.id}
+              currentUserId={viewer.user.id}
+              initialMessages={messages}
+              canModerate={viewer.user.id === party.ownerId}
+              notice={access.daysLeft ? `แชทจะหายไปใน ${access.daysLeft} วัน` : null}
+            />
+          </LazySection>
         </>
       );
     }
