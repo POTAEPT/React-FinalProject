@@ -1,7 +1,8 @@
 import { chatState } from "@/lib/chat/expiry";
 import { messageColumns, toMessage } from "@/lib/chat/message";
 import { isPartyCategory } from "@/lib/parties/categories";
-import { loadRelated, matchesSearch, partyColumns } from "@/lib/parties/queries";
+import { loadRelated, partyColumns } from "@/lib/parties/queries";
+import { matchesSearch } from "@/lib/parties/search";
 import { partyEndMs } from "@/lib/parties/time";
 import { createClient } from "@/lib/supabase/server";
 

@@ -1,5 +1,8 @@
+import { Suspense } from "react";
+
 import { PartyComposer } from "@/components/party-composer";
 import { PartyFeed } from "@/components/party-feed";
+import { PartyFeedSkeleton } from "@/components/party-card-skeleton";
 import { loadAccount } from "@/lib/auth/account";
 import { readFeedFilters } from "@/lib/parties/filters";
 
@@ -27,10 +30,12 @@ export default async function Home({ searchParams }) {
       <div className="border-b border-line">
         <PartyComposer account={account} />
       </div>
-      <PartyFeed
-        filters={filters}
-        emptyMessage="ยังไม่มีตี้ที่ตรงกับตัวกรอง ลองเปลี่ยนหมวดหรือตั้งตี้ใหม่"
-      />
+      <Suspense fallback={<PartyFeedSkeleton />}>
+        <PartyFeed
+          filters={filters}
+          emptyMessage="ยังไม่มีตี้ที่ตรงกับตัวกรอง ลองเปลี่ยนหมวดหรือตั้งตี้ใหม่"
+        />
+      </Suspense>
     </main>
   );
 }

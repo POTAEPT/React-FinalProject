@@ -1,21 +1,20 @@
 import { Suspense } from "react";
 
 import { PartyFilters } from "@/components/party-filters";
-import { PartyFeed } from "@/components/party-feed";
-import { readFeedFilters } from "@/lib/parties/filters";
+import { PartyFeedSkeleton } from "@/components/party-card-skeleton";
+import { SearchFeed } from "@/components/search-feed";
 
-// Rendering: SSR (ตั้งใจ) — ผลค้นหาขึ้นกับ ?q= / หมวด / ช่วงวันที่ใน URL ที่มีได้
-// ไม่จำกัดแบบ และปุ่มบนการ์ดขึ้นกับคนที่ดู จึงสร้างหน้าล่วงหน้า (SSG/ISR) ไม่ได้
+// Rendering: SSR (ตั้งใจ) — ปุ่มบนการ์ดขึ้นกับคนที่ดู (session + ตี้ที่ตัวเองมี) และ
+// จำนวนที่นั่งต้องเป็นค่าปัจจุบัน จึงสร้างหน้าล่วงหน้า (SSG/ISR) ไม่ได้
+// หน้านี้ดึงตี้ทั้งหมดครั้งเดียว แล้วกรองฝั่ง client ตาม ?q= / หมวด / ช่วงวันที่
+// (ดู SearchResults) จึงไม่อ่าน searchParams บน server
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "ค้นหา | MaTee",
 };
 
-export default async function SearchPage({ searchParams }) {
-  const filters = await readFeedFilters(searchParams, "all");
-  const searching = Boolean(filters.q || filters.category || filters.after || filters.before || filters.host);
-
+export default function SearchPage() {
   return (
     <main className="flex w-full flex-1 flex-col">
       <h1 className="sr-only">ค้นหา</h1>
@@ -23,20 +22,9 @@ export default async function SearchPage({ searchParams }) {
         <PartyFilters />
       </Suspense>
       <div className="border-t border-line" />
-      {searching ? (
-        <PartyFeed
-          filters={filters}
-          emptyMessage="ไม่พบตี้ที่ตรงกับคำค้นหา ลองเปลี่ยนคำ หมวด หรือเอาตัวกรองออก"
-        />
-      ) : (
-        <>
-          <h2 className="px-4 pt-4 pb-1 text-base font-semibold text-muted">ตี้แนะนำ</h2>
-          <PartyFeed
-            filters={{ ...filters, availability: "open" }}
-            emptyMessage="ยังไม่มีตี้ที่เปิดรับ ลองตั้งตี้ใหม่"
-          />
-        </>
-      )}
+      <Suspense fallback={<PartyFeedSkeleton />}>
+        <SearchFeed />
+      </Suspense>
     </main>
   );
 }

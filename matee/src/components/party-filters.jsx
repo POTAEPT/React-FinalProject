@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { isPartyCategory, PARTY_CATEGORIES } from "@/lib/parties/categories";
+import { writeSearchUrl } from "@/lib/url-state";
 
 const chipBase =
   "press shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
@@ -10,7 +11,6 @@ const chipOn = "border-brand bg-brand-soft font-semibold text-foreground";
 const chipOff = "border-line text-muted hover:bg-background";
 
 export function PartyFilters() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const rawCategory = searchParams.get("category") ?? "";
   const category = isPartyCategory(rawCategory) ? rawCategory : "";
@@ -31,7 +31,7 @@ export function PartyFilters() {
       params.set("availability", "open");
     }
 
-    router.push(params.size ? `/search?${params}` : "/search");
+    writeSearchUrl(params);
   }
 
   return (
