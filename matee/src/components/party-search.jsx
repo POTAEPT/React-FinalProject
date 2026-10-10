@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+
+import { writeSearchUrl } from "@/lib/url-state";
 
 const KEYS = ["q", "after", "before", "host"];
 
@@ -31,11 +33,13 @@ const inputClass =
 // menu (after date, before date, from host). The URL is the state, so a
 // search can be shared and the back button works.
 export function PartySearch() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initial = Object.fromEntries(KEYS.map((key) => [key, searchParams.get(key) ?? ""]));
   const [values, setValues] = useState(initial);
   const [synced, setSynced] = useState(searchParams.toString());
+  // The last query string this form wrote, so its own URL updates do not
+  // reset what the user is still typing.
+  const [written, setWritten] = useState(searchParams.toString());
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const rootRef = useRef(null);
@@ -43,7 +47,10 @@ export function PartySearch() {
   // Follow the URL when it changes outside this form (back button, chips).
   if (synced !== searchParams.toString()) {
     setSynced(searchParams.toString());
-    setValues(initial);
+
+    if (searchParams.toString() !== written) {
+      setValues(initial);
+    }
   }
 
   useEffect(() => {
@@ -72,12 +79,14 @@ export function PartySearch() {
     };
   }, [open]);
 
-  function go(next) {
+  function go(next, { replace = false } = {}) {
+    // Read the live URL: this can run from a timer, after searchParams went stale.
+    const current = new URLSearchParams(window.location.search);
     const params = new URLSearchParams();
 
     // The chips live in another component; keep what they set.
     for (const key of ["category", "availability"]) {
-      const kept = searchParams.get(key);
+      const kept = current.get(key);
 
       if (kept) {
         params.set(key, kept);
@@ -92,11 +101,17 @@ export function PartySearch() {
       }
     }
 
-    router.push(params.size ? `/search?${params}` : "/search");
+    setWritten(writeSearchUrl(params, { replace }));
   }
 
   function set(key, value) {
     setValues((current) => ({ ...current, [key]: value }));
+  }
+
+  // The URL follows every keystroke; the results debounce it (SearchResults).
+  function onType(value) {
+    set("q", value);
+    go({ ...values, q: value }, { replace: true });
   }
 
   function onSubmit(event) {
@@ -127,7 +142,7 @@ export function PartySearch() {
             type="search"
             autoFocus
             value={values.q}
-            onChange={(event) => set("q", event.target.value)}
+            onChange={(event) => onType(event.target.value)}
             placeholder="ค้นหาชื่อกิจกรรมหรือสถานที่"
             className="min-w-0 flex-1 bg-transparent py-2.5 text-base outline-none placeholder:text-muted"
           />

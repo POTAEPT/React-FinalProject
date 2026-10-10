@@ -62,16 +62,21 @@ export function partyEndMs(eventDate, eventTime, durationMinutes) {
   return partyStartMs(eventDate, eventTime) + durationMinutes * 60 * 1000;
 }
 
-export function formatEventDate(isoDate) {
-  const date = new Date(`${isoDate}T00:00:00+07:00`);
+// Weekday names are fixed rather than taken from Intl: Node and browsers
+// disagree on the short form ("เสาร์" vs "ส."), which breaks hydration now that
+// cards also render on the client.
+const WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
-  return new Intl.DateTimeFormat("th-TH", {
-    weekday: "short",
+export function formatEventDate(isoDate) {
+  const weekday = WEEKDAYS[new Date(`${isoDate}T12:00:00Z`).getUTCDay()];
+  const rest = new Intl.DateTimeFormat("th-TH", {
     day: "numeric",
     month: "short",
     year: "numeric",
     timeZone: "Asia/Bangkok",
-  }).format(date);
+  }).format(new Date(`${isoDate}T00:00:00+07:00`));
+
+  return `${weekday} ${rest}`;
 }
 
 // A timestamptz (e.g. profiles.created_at) as a Thai date, with the time when

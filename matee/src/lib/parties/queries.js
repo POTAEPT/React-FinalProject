@@ -1,24 +1,12 @@
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { getMyCommitments } from "@/lib/parties/my-commitments";
+import { matchesSearch } from "@/lib/parties/search";
 import { partyEndMs, partyStartMs } from "@/lib/parties/time";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 export const partyColumns =
   "id, owner_id, title, category, custom_category, join_mode, event_date, event_time, duration_minutes, location, max_members, confirmed_count, detail, status, created_at, updated_at";
-
-export function matchesSearch(party, query) {
-  if (!query) {
-    return true;
-  }
-
-  const haystack = [party.title, party.location, party.customCategory]
-    .filter(Boolean)
-    .join(" ")
-    .toLocaleLowerCase("th");
-
-  return haystack.includes(query.toLocaleLowerCase("th"));
-}
 
 function toParty(row, owner, counts) {
   const start = partyStartMs(row.event_date, row.event_time);
