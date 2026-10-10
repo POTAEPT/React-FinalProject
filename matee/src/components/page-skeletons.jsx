@@ -132,3 +132,32 @@ export function ProfileSkeleton() {
     </Status>
   );
 }
+
+// A form card: a few labelled fields and a submit button.
+export function FormSkeleton({ fields = 4 }) {
+  return (
+    <div role="status" aria-label="กำลังโหลดฟอร์ม" className="grid gap-4 px-4 py-4">
+      {Array.from({ length: fields }, (_, index) => (
+        <div key={index} className="grid gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+      ))}
+      <Skeleton className="h-11 w-full rounded-xl" />
+    </div>
+  );
+}
+
+// Member sections on the manage page.
+export function MemberSectionsSkeleton() {
+  return (
+    <div role="status" aria-label="กำลังโหลดสมาชิก" className="grid gap-6">
+      {Array.from({ length: 2 }, (_, index) => (
+        <div key={index} className="grid gap-3 rounded-2xl border border-line bg-card p-5">
+          <Skeleton className="h-6 w-32" />
+          <ListSkeleton rows={2} />
+        </div>
+      ))}
+    </div>
+  );
+}

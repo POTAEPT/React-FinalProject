@@ -1,7 +1,13 @@
+import dynamic from 'next/dynamic'
 import { redirect } from 'next/navigation'
 
-import { EditProfileForm } from '@/components/account/EditProfileForm'
+import { FormSkeleton } from '@/components/page-skeletons'
 import { getSession } from '@/lib/auth/get-session'
+
+const EditProfileForm = dynamic(
+  () => import('@/components/account/EditProfileForm').then((module) => module.EditProfileForm),
+  { loading: () => <FormSkeleton fields={2} /> },
+)
 
 // Edit form with its sign-in guard. Shared by /account/edit and the modal
 // that intercepts it, so there is one form.

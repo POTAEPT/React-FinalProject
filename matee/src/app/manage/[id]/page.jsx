@@ -1,6 +1,8 @@
+import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { AutoRefresh } from "@/components/auto-refresh";
 import {
@@ -8,7 +10,7 @@ import {
   DecisionButtons,
   UndoRejectButton,
 } from "@/components/party/ManageControls";
-import { PartyForm } from "@/components/party/PartyForm";
+import { FormSkeleton, MemberSectionsSkeleton } from "@/components/page-skeletons";
 import { joinModeLabel } from "@/lib/parties/categories";
 import { updateParty } from "@/lib/parties/party-actions";
 import {
@@ -17,6 +19,11 @@ import {
   listPartyMembers,
 } from "@/lib/parties/queries";
 import { bangkokToday, formatEventDate, formatTimeRange } from "@/lib/parties/time";
+
+const PartyForm = nextDynamic(
+  () => import("@/components/party/PartyForm").then((module) => module.PartyForm),
+  { loading: () => <FormSkeleton fields={5} /> },
+);
 
 // Rendering: SSR (ตั้งใจ) — เฉพาะเจ้าของตี้ (ตรวจทุก request) และคิวคำขอต้อง
 // เป็นค่าล่าสุด หน้านี้ยัง refresh เองทุก 15 วินาที (<AutoRefresh>) เพื่อดึง SSR ใหม่
@@ -53,23 +60,9 @@ function MemberRow({ member, children }) {
   );
 }
 
-// Host only. Anyone else, including other signed-in users, gets a 404.
-// Signed-out visitors are sent to /login by the proxy (src/proxy.js).
-export default async function ManagePartyPage({ params }) {
-  const { id } = await params;
-
-  if (!partyIdPattern.test(id)) {
-    notFound();
-  }
-
-  const [result, viewer] = await Promise.all([getParty(id), getViewerMembership(id)]);
-
-  if (!result.ok || !result.party || !viewer.user || result.party.ownerId !== viewer.user.id) {
-    notFound();
-  }
-
-  const party = result.party;
-  const { members } = await listPartyMembers(id);
+// Members and the edit form load after the header, so the page shell shows first.
+async function ManageMembers({ party }) {
+  const { members } = await listPartyMembers(party.id);
   const pending = members.filter((member) => member.status === "pending");
   const confirmed = members.filter((member) => member.status === "confirmed");
   const rejected = members.filter((member) => member.status === "rejected");
@@ -84,24 +77,7 @@ export default async function ManagePartyPage({ params }) {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
-      {cancelled ? null : <AutoRefresh seconds={15} />}
-      <Link href={`/party/${party.id}`} className="text-sm text-muted">
-        กลับไปหน้าตี้
-      </Link>
-      <div className="grid gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{party.title}</h1>
-        <p className="text-sm text-muted">
-          {formatEventDate(party.eventDate)} · {formatTimeRange(party.eventTime, party.durationMinutes)} ·{" "}
-          {joinModeLabel(party.joinMode)} · {party.confirmedCount}/{party.maxMembers} ที่นั่ง
-        </p>
-        {cancelled ? (
-          <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
-            ตี้นี้ถูกยกเลิกแล้ว
-          </p>
-        ) : null}
-      </div>
-
+    <>
       <section aria-labelledby="pending-title" className="grid gap-2 rounded-2xl border border-line bg-card p-5">
         <h2 id="pending-title" className="text-lg font-semibold">
           รออนุมัติ ({pending.length})
@@ -188,6 +164,50 @@ export default async function ManagePartyPage({ params }) {
           </div>
         </details>
       ) : null}
+    </>
+  );
+}
+
+// Host only. Anyone else, including other signed-in users, gets a 404.
+// Signed-out visitors are sent to /login by the proxy (src/proxy.js).
+export default async function ManagePartyPage({ params }) {
+  const { id } = await params;
+
+  if (!partyIdPattern.test(id)) {
+    notFound();
+  }
+
+  const [result, viewer] = await Promise.all([getParty(id), getViewerMembership(id)]);
+
+  if (!result.ok || !result.party || !viewer.user || result.party.ownerId !== viewer.user.id) {
+    notFound();
+  }
+
+  const party = result.party;
+  const cancelled = party.status === "cancelled";
+
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
+      {cancelled ? null : <AutoRefresh seconds={15} />}
+      <Link href={`/party/${party.id}`} className="text-sm text-muted">
+        กลับไปหน้าตี้
+      </Link>
+      <div className="grid gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight">{party.title}</h1>
+        <p className="text-sm text-muted">
+          {formatEventDate(party.eventDate)} · {formatTimeRange(party.eventTime, party.durationMinutes)} ·{" "}
+          {joinModeLabel(party.joinMode)} · {party.confirmedCount}/{party.maxMembers} ที่นั่ง
+        </p>
+        {cancelled ? (
+          <p role="status" className="rounded-xl border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger">
+            ตี้นี้ถูกยกเลิกแล้ว
+          </p>
+        ) : null}
+      </div>
+
+      <Suspense fallback={<MemberSectionsSkeleton />}>
+        <ManageMembers party={party} />
+      </Suspense>
 
       {cancelled ? null : <CancelPartyButton partyId={party.id} title={party.title} />}
     </main>
